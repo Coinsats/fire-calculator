@@ -572,6 +572,13 @@
           </div>
         </div>
         <div class="field">
+          <label>Step-up SIP (Annual Increase %)</label>
+          <div class="range-row">
+            <input type="range" id="sip-stepup" min="0" max="100" value="10" step="1" oninput="document.getElementById('sip-stepupVal').textContent=this.value+'%'">
+            <span class="range-val" id="sip-stepupVal">10%</span>
+          </div>
+        </div>
+        <div class="field">
           <label>Lumpsum / Existing Investment (<span class="cur-sym">AED</span>)</label>
           <input type="number" id="sip-lump" value="0"/>
         </div>
@@ -595,12 +602,78 @@
               <div class="r-label">Return Multiple</div>
               <div class="r-val" id="sip-mult">—</div>
             </div>
+
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">📊 Monthly SIP Growth</div>
-        <div class="chart-wrap" style="height:320px;"><canvas id="sipChart"></canvas></div>
+      <div>
+        <div class="card">
+          <div class="card-title">📊 Monthly SIP Growth</div>
+          <div class="chart-wrap" style="height:320px;"><canvas id="sipChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">💡 What is Step-up SIP?</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:1.8;">
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+                <div style="color:var(--green);font-weight:700;margin-bottom:8px;">📌 Flat SIP (Step-up = 0%)</div>
+                <div style="color:var(--text2);">You invest the <strong style="color:var(--text);">same amount every month</strong>, forever.</div>
+                <div style="margin-top:8px;color:var(--text3);">Month 1–60: 10,000/mo</div>
+                <div style="margin-top:6px;color:var(--text);">Total invested in 5 yrs: <strong style="color:var(--green);">600,000</strong></div>
+                <div style="margin-top:8px;color:var(--text3);font-size:11px;">Simple. Predictable. But ignores salary growth.</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+                <div style="color:var(--orange);font-weight:700;margin-bottom:8px;">🚀 Step-up SIP (e.g. 10%/yr)</div>
+                <div style="color:var(--text2);">SIP <strong style="color:var(--text);">increases every year</strong> as your income grows.</div>
+                <div style="margin-top:8px;color:var(--text3);">Yr 1: 10,000 → Yr 2: 11,000 → Yr 3: 12,100 → ...</div>
+                <div style="margin-top:6px;color:var(--text);">Total invested in 5 yrs: <strong style="color:var(--orange);">~733,000</strong></div>
+                <div style="margin-top:8px;color:var(--text3);font-size:11px;">Invest more as you earn more. Corpus grows much faster.</div>
+              </div>
+            </div>
+
+            <div style="background:var(--orange-dim);border:1px solid var(--orange-glow);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+              <span style="color:var(--orange);font-weight:700;">How to use this calculator</span>
+              <ol style="margin-top:8px;padding-left:16px;color:var(--text2);line-height:2;">
+                <li>Enter your <strong style="color:var(--text);">starting monthly SIP</strong> — what you can invest today.</li>
+                <li>Set <strong style="color:var(--text);">Investment Duration</strong> — how many years you plan to stay invested.</li>
+                <li>Set <strong style="color:var(--text);">Annual Return (CAGR)</strong> — expected yearly growth rate of your investment.</li>
+                <li>Set <strong style="color:var(--text);">Step-up %</strong> — how much you'll increase your SIP every year (matches salary hike).</li>
+                <li>The chart shows <strong style="color:var(--orange);">Step-up Corpus</strong> vs <strong style="color:var(--green);">Flat SIP Corpus</strong> so you can see the difference.</li>
+              </ol>
+            </div>
+
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+              <div style="color:var(--text);font-weight:700;margin-bottom:8px;">📊 Quick Example</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;margin-top:8px;">
+                <div>
+                  <div style="color:var(--text3);font-size:10px;">Starting SIP</div>
+                  <div style="color:var(--text);font-weight:700;">10,000/mo</div>
+                </div>
+                <div>
+                  <div style="color:var(--text3);font-size:10px;">CAGR</div>
+                  <div style="color:var(--text);font-weight:700;">25% / yr</div>
+                </div>
+                <div>
+                  <div style="color:var(--text3);font-size:10px;">Duration</div>
+                  <div style="color:var(--text);font-weight:700;">10 years</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;text-align:center;">
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                  <div style="color:var(--text3);font-size:10px;">Flat SIP (0%)</div>
+                  <div style="color:var(--green);font-weight:700;font-size:13px;margin-top:4px;">~1.58 Cr</div>
+                </div>
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">
+                  <div style="color:var(--text3);font-size:10px;">Step-up SIP (10%)</div>
+                  <div style="color:var(--orange);font-weight:700;font-size:13px;margin-top:4px;">~2.31 Cr</div>
+                </div>
+              </div>
+              <div style="color:var(--text3);font-size:11px;margin-top:10px;text-align:center;">That's <strong style="color:var(--orange);">46% more wealth</strong> just by stepping up 10% each year.</div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1094,38 +1167,66 @@ function drawFireChart(years, cagr, monthlySIP, target, lumpsum) {
 // ================================================================
 // SIP CALCULATOR
 // ================================================================
+function sipFVStepUp(monthly, cagr, years, stepUpPct, lump=0) {
+  // Month-by-month simulation with annual step-up
+  const mr = Math.pow(1 + cagr/100, 1/12) - 1;
+  let bal = lump;
+  let curMonthly = monthly;
+  for (let m = 1; m <= years * 12; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) curMonthly *= (1 + stepUpPct / 100);
+    bal = (bal + curMonthly) * (1 + mr);
+  }
+  return bal;
+}
+
 function calcSIP() {
   const monthly = parseFloat(document.getElementById('sip-amount').value)||4191;
   const years = parseFloat(document.getElementById('sip-years').value)||5;
   const cagr = parseFloat(document.getElementById('sip-cagr').value)||58.4;
+  const stepUpRaw = document.getElementById('sip-stepup').value;
+  const stepUp = (stepUpRaw === '' || stepUpRaw === null) ? 0 : parseFloat(stepUpRaw);
   const lump = parseFloat(document.getElementById('sip-lump').value)||0;
 
-  const final = sipFV(monthly, cagr, years, lump);
-  const invested = monthly*12*years + lump;
-  const returns = final - invested;
+  // Step-up final value (month-by-month)
+  const mr = Math.pow(1 + cagr/100, 1/12) - 1;
+  let bal = lump, totalInvested = lump, curMonthly = monthly;
+  const labels=[], dataStepUp=[], dataFlat=[], dataInvested=[];
+  const totalMonths = years * 12;
+  const step = Math.max(1, Math.floor(totalMonths / 60));
 
-  document.getElementById('sip-final').textContent = fmtFull(final);
-  document.getElementById('sip-invested').textContent = fmtFull(invested);
-  document.getElementById('sip-returns').textContent = fmtFull(returns);
-  document.getElementById('sip-mult').textContent = (final/Math.max(invested,1)).toFixed(2)+'×';
-
-  // Chart
-  const labels=[], dataCorpus=[], dataInvested=[];
-  const r=cagr/100, mr=Math.pow(1+r,1/12)-1;
-  for(let m=0;m<=years*12;m+=Math.max(1,Math.floor(years*12/60))){
-    const v = monthly*((Math.pow(1+mr,m)-1)/mr)*(1+mr)+lump*Math.pow(1+r,m/12);
-    labels.push(`${Math.floor(m/12)}y`);
-    dataCorpus.push(Math.round(v));
-    dataInvested.push(Math.round(monthly*m+lump));
+  for (let m = 1; m <= totalMonths; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) curMonthly *= (1 + stepUp / 100);
+    bal = (bal + curMonthly) * (1 + mr);
+    totalInvested += curMonthly;
+    if (m % step === 0 || m === totalMonths) {
+      labels.push(m % 12 === 0 ? `${Math.floor(m/12)}y` : '');
+      dataStepUp.push(Math.round(bal));
+      // Flat SIP corpus at same point
+      const flatBal = monthly*((Math.pow(1+mr,m)-1)/mr)*(1+mr) + lump*Math.pow(1+cagr/100, m/12);
+      dataFlat.push(Math.round(flatBal));
+      dataInvested.push(Math.round(totalInvested));
+    }
   }
+
+  const returns = bal - totalInvested;
+
+  document.getElementById('sip-final').textContent = fmtFull(Math.round(bal));
+  document.getElementById('sip-invested').textContent = fmtFull(Math.round(totalInvested));
+  document.getElementById('sip-returns').textContent = fmtFull(Math.round(returns));
+  document.getElementById('sip-mult').textContent = (bal/Math.max(totalInvested,1)).toFixed(2)+'×';
+
   if(sipChart) sipChart.destroy();
+  const datasets = [
+    {label:'Step-up Corpus', data:dataStepUp, backgroundColor:'rgba(247,147,26,0.75)', borderColor:'#f7931a', borderWidth:1, borderRadius:3, type:'bar'},
+    {label:'Amount Invested', data:dataInvested, backgroundColor:'rgba(59,130,246,0.35)', borderColor:'rgba(59,130,246,0.6)', borderWidth:1, borderRadius:3, type:'bar'},
+  ];
+  if (stepUp > 0) {
+    datasets.push({label:'Flat SIP (no step-up)', data:dataFlat, borderColor:'#22c55e', backgroundColor:'transparent', borderWidth:2, borderDash:[5,4], pointRadius:0, type:'line', tension:0.3, yAxisID:'y'});
+  }
   sipChart = new Chart(document.getElementById('sipChart'),{
     type:'bar',
-    data:{labels,datasets:[
-      {label:'Corpus',data:dataCorpus,backgroundColor:'rgba(247,147,26,0.7)',borderRadius:3},
-      {label:'Invested',data:dataInvested,backgroundColor:'rgba(59,130,246,0.4)',borderRadius:3},
-    ]},
-    options:{...chartOptions('SIP Growth'),plugins:{...chartOptions('').plugins,legend:{labels:{color:'#9a9590',font:{family:'Space Mono',size:11}}}}}
+    data:{labels, datasets},
+    options:{...chartOptions('SIP Growth'), plugins:{...chartOptions('').plugins, legend:{display:true, labels:{color:'#9a9590', font:{family:'Space Mono', size:10}}}}}
   });
 }
 
