@@ -328,6 +328,52 @@
   .tbl-scroll { overflow-x:auto; }
 
   input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+
+  /* SOCIALS BAR */
+  .social-bar {
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .social-link {
+    display:flex; align-items:center; gap:6px;
+    color:var(--text3); font-family:var(--font-mono); font-size:11px;
+    text-decoration:none; transition:color .2s;
+    letter-spacing:0.5px;
+  }
+  .social-link:hover { color:var(--orange); }
+  .social-icon {
+    width:26px; height:26px; border-radius:6px;
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; transition:border-color .2s, background .2s;
+    background:var(--bg3);
+  }
+  .social-link:hover .social-icon { border-color:var(--orange); background:var(--orange-dim); }
+
+  /* FOOTER */
+  .site-footer {
+    border-top:1px solid var(--border);
+    margin-top:48px; padding:28px 0 20px;
+    text-align:center;
+  }
+  .footer-donation {
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:10px; padding:12px 20px;
+    font-family:var(--font-mono); font-size:12px;
+    color:var(--text2); margin-bottom:14px;
+    cursor:pointer; transition:border-color .2s;
+  }
+  .footer-donation:hover { border-color:var(--orange); color:var(--text); }
+  .footer-donation .btc-addr { color:var(--orange); font-size:11px; letter-spacing:0.5px; word-break:break-all; }
+  .footer-copy { font-size:11px; color:var(--text3); font-family:var(--font-mono); letter-spacing:1px; }
+  .footer-copy a { color:var(--text3); text-decoration:none; }
+  .footer-copy a:hover { color:var(--orange); }
+  .copy-toast {
+    display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--orange); color:#000; font-family:var(--font-mono); font-size:12px;
+    font-weight:700; padding:10px 20px; border-radius:8px; z-index:999;
+    letter-spacing:1px;
+  }
 </style>
 </head>
 <body>
@@ -341,6 +387,20 @@
         <h1>FIRE with Bitcoin</h1>
         <p>Retire Early · Stack Sats · Live Free</p>
       </div>
+    </div>
+    <div class="social-bar">
+      <a class="social-link" href="https://instagram.com/Zubair0910" target="_blank">
+        <span class="social-icon">📸</span>@Zubair0910
+      </a>
+      <a class="social-link" href="https://twitter.com/Zubair0910" target="_blank">
+        <span class="social-icon">𝕏</span>@Zubair0910
+      </a>
+      <a class="social-link" href="https://wa.me/971582213303" target="_blank">
+        <span class="social-icon">💬</span>WhatsApp
+      </a>
+      <a class="social-link" href="https://www.coinsats.io" target="_blank">
+        <span class="social-icon">🌐</span>coinsats.io
+      </a>
     </div>
     <div class="currency-bar">
       <span class="cur-label">Currency:</span>
@@ -411,9 +471,9 @@
     <div class="two-col">
       <div>
         <div class="card">
-          <div class="card-title">⚙️ Your Details</div>
+          <div class="card-title">⚙️ Input Your Details</div>
           <div class="mode-toggle">
-            <button class="mode-btn active" onclick="setFireMode('corpus',this)">🎯 I know my<br/>target corpus</button>
+            <button class="mode-btn active" onclick="setFireMode('corpus',this)">🎯 I know my<br/>retirement goal</button>
             <button class="mode-btn" onclick="setFireMode('expense',this)">💡 Calculate from<br/>my expenses</button>
           </div>
 
@@ -438,7 +498,7 @@
             <div class="field">
               <label>Inflation Rate</label>
               <div class="range-row">
-                <input type="range" id="a-infl" min="1" max="12" value="5" oninput="document.getElementById('a-inflVal').textContent=this.value+'%'">
+                <input type="range" id="a-infl" min="0" max="12" value="5" oninput="document.getElementById('a-inflVal').textContent=this.value+'%'">
                 <span class="range-val" id="a-inflVal">5%</span>
               </div>
             </div>
@@ -457,16 +517,8 @@
               </div>
             </div>
             <div class="field">
-              <label>Monthly Income (<span class="cur-sym">AED</span>)</label>
-              <input type="number" id="b-income" value="25000"/>
-            </div>
-            <div class="field">
-              <label>Monthly Expenses (<span class="cur-sym">AED</span>)</label>
+              <label>Current Monthly Expenses (<span class="cur-sym">AED</span>)</label>
               <input type="number" id="b-expenses" value="15000"/>
-            </div>
-            <div class="field">
-              <label>Expected Monthly Expenses at Retirement (<span class="cur-sym">AED</span>)</label>
-              <input type="number" id="b-retExpenses" value="20000"/>
             </div>
             <div class="field">
               <label>Existing Savings / Lumpsum (<span class="cur-sym">AED</span>)</label>
@@ -479,7 +531,7 @@
             <div class="field">
               <label>Inflation Rate</label>
               <div class="range-row">
-                <input type="range" id="b-infl" min="1" max="12" value="5" oninput="document.getElementById('b-inflVal').textContent=this.value+'%'">
+                <input type="range" id="b-infl" min="0" max="12" value="5" oninput="document.getElementById('b-inflVal').textContent=this.value+'%'">
                 <span class="range-val" id="b-inflVal">5%</span>
               </div>
             </div>
@@ -1061,25 +1113,25 @@ function calcFIRE() {
     retAge = parseInt(document.getElementById('a-retAge').value)||45;
     const rawCorpus = parseFloat(document.getElementById('a-corpus').value)||3000000;
     lumpsum = parseFloat(document.getElementById('a-lumpsum').value)||0;
-    inflRate = parseFloat(document.getElementById('a-infl').value)||5;
+    inflRate = (() => { const v = document.getElementById('a-infl').value; return (v===''||v===null) ? 0 : parseFloat(v); })();
     years = Math.max(retAge - age, 1);
 
     // Inflation-adjusted corpus needed
     corpus = rawCorpus * Math.pow(1+inflRate/100, years);
-    monthlySIP = requiredSIP(corpus, cagr, years, lumpsum);
-    const lumpsumNeeded = requiredLumpsum(corpus, cagr, years);
+    monthlySIP = Math.ceil(requiredSIP(corpus, cagr, years, lumpsum));
+    const lumpsumNeeded = Math.ceil(requiredLumpsum(corpus, cagr, years));
     totalInvested = monthlySIP*12*years + lumpsum;
     gains = corpus - totalInvested;
 
-    document.getElementById('res-sip').textContent = fmt(monthlySIP);
+    document.getElementById('res-sip').textContent = fmtFull(monthlySIP);
     document.getElementById('res-sip-sub').textContent = `in BTC @ ${cagr}% CAGR`;
-    document.getElementById('res-corpus').textContent = fmt(corpus);
+    document.getElementById('res-corpus').textContent = fmtFull(corpus);
     document.getElementById('res-corpus-sub').textContent = `target (${inflRate}% infl adj)`;
     document.getElementById('res-years').textContent = years+' yrs';
     document.getElementById('res-year-label').textContent = `retire at age ${retAge}`;
-    document.getElementById('res-lump').textContent = fmt(lumpsumNeeded);
-    document.getElementById('res-invested').textContent = fmt(totalInvested);
-    document.getElementById('res-gains').textContent = fmt(gains);
+    document.getElementById('res-lump').textContent = fmtFull(lumpsumNeeded);
+    document.getElementById('res-invested').textContent = fmtFull(totalInvested);
+    document.getElementById('res-gains').textContent = fmtFull(gains);
     document.getElementById('res-gains-x').textContent = `${(corpus/Math.max(totalInvested,1)).toFixed(1)}× return`;
 
     infoText = `<strong>Summary:</strong> To build a corpus of ${fmt(corpus)} (inflation-adjusted from ${fmt(rawCorpus)}) in <strong>${years} years</strong> by age ${retAge}, you need to SIP <strong>${fmt(monthlySIP)}/month</strong> into Bitcoin at ${cagr}% CAGR. Alternatively, a single lumpsum of <strong>${fmt(lumpsumNeeded)}</strong> today would achieve the same result.`;
@@ -1087,17 +1139,15 @@ function calcFIRE() {
   } else {
     age = parseInt(document.getElementById('b-age').value)||35;
     retAge = parseInt(document.getElementById('b-retAge').value)||45;
-    const income = parseFloat(document.getElementById('b-income').value)||25000;
     const expenses = parseFloat(document.getElementById('b-expenses').value)||15000;
-    const retExpenses = parseFloat(document.getElementById('b-retExpenses').value)||20000;
     lumpsum = parseFloat(document.getElementById('b-lumpsum').value)||0;
     const lifeExp = parseInt(document.getElementById('b-lifeExp').value)||85;
-    inflRate = parseFloat(document.getElementById('b-infl').value)||5;
+    inflRate = (() => { const v = document.getElementById('b-infl').value; return (v===''||v===null) ? 0 : parseFloat(v); })();
     years = Math.max(retAge - age, 1);
     const retYears = Math.max(lifeExp - retAge, 0);
 
-    // Inflation-adjusted monthly expenses at retirement
-    const adjRetExpenses = retExpenses * Math.pow(1+inflRate/100, years);
+    // Inflate current expenses to retirement age
+    const adjRetExpenses = expenses * Math.pow(1+inflRate/100, years);
 
     // Corpus needed based on withdrawal strategy
     let withdrawalRate;
@@ -1105,28 +1155,25 @@ function calcFIRE() {
     else if(wrMode==='25x') withdrawalRate=1/25;
     else withdrawalRate=(parseFloat(document.getElementById('b-wrRate').value)||4)/100;
 
-    const annualRetExpenses = adjRetExpenses*12;
-    corpus = annualRetExpenses / withdrawalRate;
+    corpus = (adjRetExpenses * 12) / withdrawalRate;
 
-    const savingsRate = Math.max(income - expenses, 0);
-    monthlySIP = requiredSIP(corpus, cagr, years, lumpsum);
-    const lumpsumNeeded = requiredLumpsum(corpus, cagr, years);
+    monthlySIP = Math.ceil(requiredSIP(corpus, cagr, years, lumpsum));
+    const lumpsumNeeded = Math.ceil(requiredLumpsum(corpus, cagr, years));
     totalInvested = monthlySIP*12*years + lumpsum;
     gains = corpus - totalInvested;
 
-    document.getElementById('res-sip').textContent = fmt(monthlySIP);
+    document.getElementById('res-sip').textContent = fmtFull(monthlySIP);
     document.getElementById('res-sip-sub').textContent = `@ ${cagr}% BTC CAGR`;
-    document.getElementById('res-corpus').textContent = fmt(corpus);
+    document.getElementById('res-corpus').textContent = fmtFull(Math.round(corpus));
     document.getElementById('res-corpus-sub').textContent = `${(wrMode==='4pct'?'4% SWR':wrMode==='25x'?'25× rule':'custom')} method`;
     document.getElementById('res-years').textContent = years+' yrs';
     document.getElementById('res-year-label').textContent = `retire at ${retAge}`;
-    document.getElementById('res-lump').textContent = fmt(lumpsumNeeded);
-    document.getElementById('res-invested').textContent = fmt(totalInvested);
-    document.getElementById('res-gains').textContent = fmt(gains);
+    document.getElementById('res-lump').textContent = fmtFull(lumpsumNeeded);
+    document.getElementById('res-invested').textContent = fmtFull(totalInvested);
+    document.getElementById('res-gains').textContent = fmtFull(Math.round(gains));
     document.getElementById('res-gains-x').textContent = `${(corpus/Math.max(totalInvested,1)).toFixed(1)}× return`;
 
-    const feasible = savingsRate >= monthlySIP;
-    infoText = `<strong>Your Retirement Expenses (at age ${retAge}):</strong> ${fmt(adjRetExpenses)}/month (inflation adj). <strong>Required Corpus:</strong> ${fmt(corpus)} using the ${wrMode==='4pct'?'4% safe withdrawal':'25× annual expense'} rule. Monthly SIP needed: <strong>${fmt(monthlySIP)}</strong> ${feasible?'✅ <strong style="color:var(--green)">You can afford this!</strong>':'⚠️ <strong style="color:var(--red)">Above your current savings of '+fmt(savingsRate)+'/mo — reduce expenses or increase income.</strong>'}`;
+    infoText = `<strong>Monthly expenses at retirement (age ${retAge}):</strong> ${fmtFull(Math.round(adjRetExpenses))}/month (inflation-adjusted from ${fmtFull(expenses)}). <strong>Required Corpus:</strong> ${fmtFull(Math.round(corpus))} using the ${wrMode==='4pct'?'4% safe withdrawal rule':wrMode==='25x'?'25× annual expense rule':'custom withdrawal rate'}. Monthly SIP needed: <strong>${fmtFull(monthlySIP)}/month</strong> at ${cagr}% CAGR over ${years} years.`;
   }
 
   document.getElementById('fireInfoBox').style.display = 'block';
@@ -1456,6 +1503,40 @@ calcSIP();
 calcSWP();
 calcCompare();
 calcPortfolio();
+</script>
+
+<div class="copy-toast" id="copyToast">✅ Address Copied!</div>
+
+<footer class="site-footer">
+  <div class="wrap" style="padding-bottom:0;">
+    <div class="footer-donation" onclick="copyBtcAddress()" title="Click to copy">
+      <span style="font-size:20px;">₿</span>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:3px;letter-spacing:1px;">BITCOIN DONATION ADDRESS</div>
+        <div class="btc-addr">bc1q77ytw2rxvwzv56a9kc698g8c3w976sszmk0368</div>
+      </div>
+      <span style="font-size:11px;color:var(--text3);margin-left:6px;">📋 copy</span>
+    </div>
+    <div class="footer-copy">
+      Built with ₿ by <a href="https://www.coinsats.io" target="_blank">coinsats.io</a>
+      &nbsp;·&nbsp;
+      <a href="https://instagram.com/Zubair0910" target="_blank">Instagram</a>
+      &nbsp;·&nbsp;
+      <a href="https://twitter.com/Zubair0910" target="_blank">Twitter</a>
+      &nbsp;·&nbsp;
+      <a href="https://wa.me/971582213303" target="_blank">WhatsApp</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyBtcAddress() {
+  navigator.clipboard.writeText('bc1q77ytw2rxvwzv56a9kc698g8c3w976sszmk0368').then(() => {
+    const t = document.getElementById('copyToast');
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2000);
+  });
+}
 </script>
 </body>
 </html>
