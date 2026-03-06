@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FIRE with Bitcoin — Retire Early Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #181818;
+    --card: #141414;
+    --border: #2a2a2a;
+    --orange: #f7931a;
+    --orange2: #ffb347;
+    --orange-glow: rgba(247,147,26,0.15);
+    --orange-dim: rgba(247,147,26,0.08);
+    --text: #f0ede8;
+    --text2: #9a9590;
+    --text3: #5a5550;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --gold: #fbbf24;
+    --purple: #a855f7;
+    --teal: #14b8a6;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated grid background */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(247,147,26,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247,147,26,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* glowing orb */
+  body::after {
+    content:'';
+    position:fixed;
+    top:-200px; right:-200px;
+    width:600px; height:600px;
+    background: radial-gradient(circle, rgba(247,147,26,0.06) 0%, transparent 70%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 20px 60px; }
+
+  /* HEADER */
+  header {
+    padding: 40px 0 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+  }
+  .logo {
+    display:flex; align-items:center; gap:14px;
+  }
+  .btc-icon {
+    width:44px; height:44px;
+    background: linear-gradient(135deg, var(--orange), #ff6b00);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; font-weight:700;
+    box-shadow: 0 0 20px rgba(247,147,26,0.4);
+    color:#fff;
+    font-family: var(--font-mono);
+  }
+  .logo-text h1 {
+    font-size:22px; font-weight:800; letter-spacing:-0.5px;
+    background: linear-gradient(90deg, var(--orange), var(--orange2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .logo-text p { font-size:11px; color:var(--text3); font-family:var(--font-mono); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+
+  /* CURRENCY BAR */
+  .currency-bar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .cur-label { font-size:11px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; }
+  .cur-btns { display:flex; gap:4px; }
+  .cur-btn {
+    padding:6px 14px; border-radius:6px; border:1px solid var(--border);
+    background:transparent; color:var(--text2); font-family:var(--font-mono);
+    font-size:12px; cursor:pointer; transition:all .2s;
+  }
+  .cur-btn.active { background:var(--orange); border-color:var(--orange); color:#000; font-weight:700; }
+  .cur-btn:hover:not(.active) { border-color:var(--orange); color:var(--orange); }
+  .fx-input-wrap { display:flex; align-items:center; gap:8px; }
+  .fx-label { font-size:11px; color:var(--text3); font-family:var(--font-mono); }
+  .fx-input {
+    width:90px; padding:6px 10px; background:var(--card); border:1px solid var(--border);
+    border-radius:6px; color:var(--text); font-family:var(--font-mono); font-size:12px;
+    outline:none;
+  }
+  .fx-input:focus { border-color:var(--orange); }
+
+  /* TABS */
+  .tabs {
+    display:flex; gap:4px; margin-bottom:28px; flex-wrap:wrap;
+    background:var(--card); padding:4px; border-radius:10px; border:1px solid var(--border);
+  }
+  .tab {
+    flex:1; min-width:130px; padding:10px 16px; border-radius:7px; border:none;
+    background:transparent; color:var(--text2); font-family:var(--font-display);
+    font-size:13px; font-weight:600; cursor:pointer; transition:all .25s;
+    white-space:nowrap; text-align:center;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--orange), #e67e00);
+    color:#000; box-shadow:0 2px 12px rgba(247,147,26,0.3);
+  }
+  .tab:hover:not(.active) { color:var(--orange); background:var(--orange-dim); }
+
+  /* PANELS */
+  .panel { display:none; }
+  .panel.active { display:block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* GRID LAYOUT */
+  .two-col { display:grid; grid-template-columns:380px 1fr; gap:24px; align-items:start; }
+  .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+  @media(max-width:900px) { .two-col { grid-template-columns:1fr; } .three-col { grid-template-columns:1fr; } }
+  @media(max-width:600px) { .three-col { grid-template-columns:1fr 1fr; } }
+
+  /* CARD */
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:24px; position:relative; overflow:hidden;
+  }
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(247,147,26,0.3), transparent);
+  }
+  .card-title {
+    font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+    color:var(--orange); margin-bottom:20px; font-family:var(--font-mono);
+  }
+
+  /* FORM ELEMENTS */
+  .field { margin-bottom:16px; }
+  .field label {
+    display:block; font-size:11px; color:var(--text2); margin-bottom:6px;
+    font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .field input[type=number], .field input[type=text], .field select {
+    width:100%; padding:10px 14px; background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:var(--font-mono); font-size:14px;
+    outline:none; transition:border-color .2s;
+    -moz-appearance:textfield;
+  }
+  .field input:focus, .field select:focus { border-color:var(--orange); }
+  .field select { cursor:pointer; }
+  .field input[type=range] {
+    width:100%; accent-color:var(--orange); height:4px; margin-top:6px;
+  }
+  .range-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .range-row input[type=range] { flex:1; }
+  .range-val {
+    font-family:var(--font-mono); font-size:13px; color:var(--orange);
+    min-width:52px; text-align:right;
+  }
+
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* MODE TOGGLE */
+  .mode-toggle {
+    display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:20px;
+  }
+  .mode-btn {
+    padding:12px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg3); color:var(--text2); font-family:var(--font-display);
+    font-size:12px; font-weight:600; cursor:pointer; transition:all .2s;
+    text-align:center; line-height:1.4;
+  }
+  .mode-btn.active {
+    background:var(--orange-glow); border-color:var(--orange); color:var(--orange);
+  }
+  .mode-btn:hover:not(.active) { border-color:var(--text3); color:var(--text); }
+
+  /* CALC BUTTON */
+  .calc-btn {
+    width:100%; padding:14px; background:linear-gradient(135deg,var(--orange),#e67e00);
+    border:none; border-radius:10px; color:#000; font-family:var(--font-display);
+    font-size:15px; font-weight:800; cursor:pointer; transition:all .2s;
+    letter-spacing:0.5px; margin-top:8px;
+    box-shadow: 0 4px 16px rgba(247,147,26,0.3);
+  }
+  .calc-btn:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(247,147,26,0.45); }
+  .calc-btn:active { transform:translateY(0); }
+
+  /* RESULTS */
+  .results-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+  .result-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+    padding:16px; text-align:center; transition:border-color .3s;
+  }
+  .result-card.highlight { border-color:var(--orange); background:var(--orange-dim); }
+  .result-card .r-label { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .result-card .r-val { font-size:20px; font-weight:800; color:var(--orange); font-family:var(--font-mono); line-height:1.2; }
+  .result-card .r-sub { font-size:10px; color:var(--text3); font-family:var(--font-mono); margin-top:4px; }
+
+  /* ASSET ALLOCATION */
+  .asset-row {
+    display:grid; grid-template-columns:120px 1fr 60px 80px; gap:10px; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--border);
+  }
+  .asset-row:last-child { border-bottom:none; }
+  .asset-name { font-size:12px; font-weight:700; font-family:var(--font-mono); display:flex; align-items:center; gap:6px; }
+  .asset-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .asset-cagr { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-align:right; }
+
+  /* CHART CONTAINER */
+  .chart-wrap { position:relative; height:280px; }
+  .chart-wrap canvas { border-radius:8px; }
+
+  /* COMPARISON TABLE */
+  .comp-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .comp-table th {
+    padding:10px 12px; text-align:left; font-family:var(--font-mono); font-size:10px;
+    text-transform:uppercase; letter-spacing:1px; color:var(--text3);
+    border-bottom:1px solid var(--border);
+  }
+  .comp-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .comp-table tr:last-child td { border-bottom:none; }
+  .comp-table tr:hover td { background:var(--orange-dim); }
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:4px;
+    font-size:10px; font-family:var(--font-mono); font-weight:700;
+  }
+  .badge-btc { background:var(--orange-glow); color:var(--orange); border:1px solid rgba(247,147,26,0.3); }
+  .badge-green { background:rgba(34,197,94,0.1); color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+
+  /* BTC PRICE SCENARIOS */
+  .scenario-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px; }
+  .scenario-card {
+    padding:14px; border-radius:10px; border:1px solid var(--border); background:var(--bg3);
+    text-align:center; cursor:pointer; transition:all .2s;
+  }
+  .scenario-card.sel { border-color:var(--orange); background:var(--orange-dim); }
+  .scenario-card .sc-label { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .scenario-card .sc-cagr { font-size:20px; font-weight:800; color:var(--orange); font-family:var(--font-mono); }
+  .scenario-card .sc-src { font-size:9px; color:var(--text3); font-family:var(--font-mono); margin-top:4px; }
+
+  /* SWP */
+  .swp-summary {
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;
+  }
+  .swp-card {
+    background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+    padding:14px; text-align:center;
+  }
+  .swp-card .s-label { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .swp-card .s-val { font-size:16px; font-weight:800; color:var(--text); font-family:var(--font-mono); }
+
+  /* INFO BOX */
+  .info-box {
+    background:var(--orange-dim); border:1px solid rgba(247,147,26,0.2);
+    border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text2);
+    font-family:var(--font-mono); line-height:1.6; margin-top:12px;
+  }
+  .info-box strong { color:var(--orange); }
+
+  /* FIRE MODES */
+  .fire-mode-section { display:none; }
+  .fire-mode-section.active { display:block; }
+
+  /* withdrawal toggle */
+  .wr-toggle { display:flex; gap:8px; margin-bottom:12px; }
+  .wr-btn {
+    flex:1; padding:8px; border-radius:6px; border:1px solid var(--border);
+    background:var(--bg3); color:var(--text2); font-family:var(--font-mono);
+    font-size:11px; cursor:pointer; transition:all .2s; text-align:center;
+  }
+  .wr-btn.active { background:var(--orange-glow); border-color:var(--orange); color:var(--orange); }
+
+  /* section label */
+  .section-sep {
+    font-size:10px; color:var(--text3); font-family:var(--font-mono);
+    text-transform:uppercase; letter-spacing:2px; padding:8px 0 4px;
+    border-top:1px solid var(--border); margin-top:8px; margin-bottom:12px;
+  }
+
+  /* portfolio mix donut */
+  .donut-wrap { height:200px; position:relative; }
+  .donut-center {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    text-align:center; pointer-events:none;
+  }
+  .donut-center .dc-val { font-size:18px; font-weight:800; color:var(--orange); font-family:var(--font-mono); }
+  .donut-center .dc-label { font-size:9px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; }
+
+  /* halving badge */
+  .halving-row {
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
+  }
+  .halving-pill {
+    padding:4px 10px; border-radius:20px; font-size:10px; font-family:var(--font-mono);
+    border:1px solid rgba(247,147,26,0.3); color:var(--orange); background:var(--orange-dim);
+  }
+  .halving-pill.past { opacity:0.4; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* table scroll wrapper */
+  .tbl-scroll { overflow-x:auto; }
+
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="btc-icon">₿</div>
+      <div class="logo-text">
+        <h1>FIRE with Bitcoin</h1>
+        <p>Retire Early · Stack Sats · Live Free</p>
+      </div>
+    </div>
+    <div class="currency-bar">
+      <span class="cur-label">Currency:</span>
+      <div class="cur-btns">
+        <button class="cur-btn active" onclick="setCurrency('AED')">AED</button>
+        <button class="cur-btn" onclick="setCurrency('USD')">USD</button>
+        <button class="cur-btn" onclick="setCurrency('INR')">INR</button>
+      </div>
+      <div class="fx-input-wrap" id="inrFxWrap" style="display:none">
+        <span class="fx-label">USD/INR:</span>
+        <input class="fx-input" type="number" id="inrRate" value="92" onchange="recalcAll()"/>
+      </div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('fire')">🔥 FIRE Calculator</button>
+    <button class="tab" onclick="showTab('sip')">📈 SIP Builder</button>
+    <button class="tab" onclick="showTab('swp')">💸 Withdrawal (SWP)</button>
+    <button class="tab" onclick="showTab('compare')">⚖️ Asset Comparison</button>
+    <button class="tab" onclick="showTab('portfolio')">🧩 Portfolio Mixer</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 1: FIRE CALCULATOR -->
+  <!-- ============================================================ -->
+  <div id="tab-fire" class="panel active">
+    <!-- BTC Scenario selector -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">₿ Bitcoin CAGR Scenario — Select Your Projection</div>
+      <div class="scenario-cards">
+        <div class="scenario-card sel" onclick="selectScenario(this,29)" id="sc-bear">
+          <div class="sc-label">🐻 Bear Case</div>
+          <div class="sc-cagr">29%</div>
+          <div class="sc-src">MicroStrategy Base</div>
+        </div>
+        <div class="scenario-card" onclick="selectScenario(this,58.4)" id="sc-base">
+          <div class="sc-label">⚖️ Base Case</div>
+          <div class="sc-cagr">58.4%</div>
+          <div class="sc-src">10yr Avg CAGR</div>
+        </div>
+        <div class="scenario-card" onclick="selectScenario(this,76)" id="sc-bull">
+          <div class="sc-label">🐂 Bull Case</div>
+          <div class="sc-cagr">76%</div>
+          <div class="sc-src">Last 10yr CAGR</div>
+        </div>
+      </div>
+      <div class="halving-row">
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-right:4px;">BTC Halvings:</span>
+        <span class="halving-pill past">2012 Nov</span>
+        <span class="halving-pill past">2016 Jul</span>
+        <span class="halving-pill past">2020 May</span>
+        <span class="halving-pill">2024 Apr ✓</span>
+        <span class="halving-pill">2028 ~Mar</span>
+        <span class="halving-pill">2032 ~</span>
+      </div>
+      <div class="field">
+        <label>Custom BTC CAGR (override scenario)</label>
+        <div class="range-row">
+          <input type="range" id="btcCagr" min="5" max="150" value="29" oninput="document.getElementById('btcCagrVal').textContent=this.value+'%'; deselectScenarios()">
+          <span class="range-val" id="btcCagrVal">29%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODE SELECT -->
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">⚙️ Your Details</div>
+          <div class="mode-toggle">
+            <button class="mode-btn active" onclick="setFireMode('corpus',this)">🎯 I know my<br/>target corpus</button>
+            <button class="mode-btn" onclick="setFireMode('expense',this)">💡 Calculate from<br/>my expenses</button>
+          </div>
+
+          <!-- MODE A: CORPUS -->
+          <div class="fire-mode-section active" id="fm-corpus">
+            <div class="field">
+              <label>Current Age</label>
+              <input type="number" id="a-age" value="35" min="18" max="70"/>
+            </div>
+            <div class="field">
+              <label>Retirement Age (Target)</label>
+              <input type="number" id="a-retAge" value="45" min="20" max="80"/>
+            </div>
+            <div class="field">
+              <label>Target Retirement Corpus (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="a-corpus" value="3000000"/>
+            </div>
+            <div class="field">
+              <label>Existing Savings / Lumpsum (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="a-lumpsum" value="0"/>
+            </div>
+            <div class="field">
+              <label>Inflation Rate</label>
+              <div class="range-row">
+                <input type="range" id="a-infl" min="1" max="12" value="5" oninput="document.getElementById('a-inflVal').textContent=this.value+'%'">
+                <span class="range-val" id="a-inflVal">5%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODE B: EXPENSE -->
+          <div class="fire-mode-section" id="fm-expense">
+            <div class="field-row">
+              <div class="field">
+                <label>Current Age</label>
+                <input type="number" id="b-age" value="35"/>
+              </div>
+              <div class="field">
+                <label>Retirement Age</label>
+                <input type="number" id="b-retAge" value="45"/>
+              </div>
+            </div>
+            <div class="field">
+              <label>Monthly Income (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="b-income" value="25000"/>
+            </div>
+            <div class="field">
+              <label>Monthly Expenses (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="b-expenses" value="15000"/>
+            </div>
+            <div class="field">
+              <label>Expected Monthly Expenses at Retirement (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="b-retExpenses" value="20000"/>
+            </div>
+            <div class="field">
+              <label>Existing Savings / Lumpsum (<span class="cur-sym">AED</span>)</label>
+              <input type="number" id="b-lumpsum" value="0"/>
+            </div>
+            <div class="field">
+              <label>Life Expectancy (years)</label>
+              <input type="number" id="b-lifeExp" value="85"/>
+            </div>
+            <div class="field">
+              <label>Inflation Rate</label>
+              <div class="range-row">
+                <input type="range" id="b-infl" min="1" max="12" value="5" oninput="document.getElementById('b-inflVal').textContent=this.value+'%'">
+                <span class="range-val" id="b-inflVal">5%</span>
+              </div>
+            </div>
+            <div class="section-sep">Withdrawal Strategy</div>
+            <div class="wr-toggle">
+              <button class="wr-btn active" onclick="setWrMode('4pct',this)">4% SWR Rule</button>
+              <button class="wr-btn" onclick="setWrMode('25x',this)">25× Rule</button>
+              <button class="wr-btn" onclick="setWrMode('custom',this)">Custom %</button>
+            </div>
+            <div class="field" id="customWrField" style="display:none">
+              <label>Custom Withdrawal Rate (%/year)</label>
+              <input type="number" id="b-wrRate" value="4" min="1" max="20" step="0.5"/>
+            </div>
+          </div>
+
+          <button class="calc-btn" onclick="calcFIRE()">🔥 Calculate FIRE Number</button>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div>
+        <div class="card" id="fireResults" style="margin-bottom:20px;">
+          <div class="card-title">🎯 Your FIRE Results</div>
+          <div class="results-grid" id="fireResultCards">
+            <div class="result-card highlight">
+              <div class="r-label">Monthly SIP Needed</div>
+              <div class="r-val" id="res-sip">—</div>
+              <div class="r-sub" id="res-sip-sub">in BTC</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Target Corpus</div>
+              <div class="r-val" id="res-corpus">—</div>
+              <div class="r-sub" id="res-corpus-sub">inflation adjusted</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Years to FIRE</div>
+              <div class="r-val" id="res-years">—</div>
+              <div class="r-sub" id="res-year-label">retirement age</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Lumpsum Alternative</div>
+              <div class="r-val" id="res-lump">—</div>
+              <div class="r-sub">invest now instead</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Total You Invest</div>
+              <div class="r-val" id="res-invested">—</div>
+              <div class="r-sub">total SIP paid</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Total Gains</div>
+              <div class="r-val" id="res-gains">—</div>
+              <div class="r-sub" id="res-gains-x">× return</div>
+            </div>
+          </div>
+          <div class="info-box" id="fireInfoBox" style="display:none"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Corpus Growth Projection</div>
+          <div class="chart-wrap"><canvas id="fireChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 2: SIP CALCULATOR -->
+  <!-- ============================================================ -->
+  <div id="tab-sip" class="panel">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">📈 SIP Builder Inputs</div>
+        <div class="field">
+          <label>Monthly SIP Amount (<span class="cur-sym">AED</span>)</label>
+          <input type="number" id="sip-amount" value="4191"/>
+        </div>
+        <div class="field">
+          <label>Investment Duration (Years)</label>
+          <div class="range-row">
+            <input type="range" id="sip-years" min="1" max="30" value="5" oninput="document.getElementById('sip-yearsVal').textContent=this.value+' yrs'">
+            <span class="range-val" id="sip-yearsVal">5 yrs</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Annual Return (CAGR %)</label>
+          <div class="range-row">
+            <input type="range" id="sip-cagr" min="5" max="150" value="58.4" step="0.1" oninput="document.getElementById('sip-cagrVal').textContent=parseFloat(this.value).toFixed(1)+'%'">
+            <span class="range-val" id="sip-cagrVal">58.4%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Lumpsum / Existing Investment (<span class="cur-sym">AED</span>)</label>
+          <input type="number" id="sip-lump" value="0"/>
+        </div>
+        <button class="calc-btn" onclick="calcSIP()">Calculate SIP Growth</button>
+
+        <div style="margin-top:20px;">
+          <div class="results-grid">
+            <div class="result-card highlight">
+              <div class="r-label">Final Corpus</div>
+              <div class="r-val" id="sip-final">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Total Invested</div>
+              <div class="r-val" id="sip-invested">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Total Returns</div>
+              <div class="r-val" id="sip-returns">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Return Multiple</div>
+              <div class="r-val" id="sip-mult">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Monthly SIP Growth</div>
+        <div class="chart-wrap" style="height:320px;"><canvas id="sipChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 3: SWP CALCULATOR -->
+  <!-- ============================================================ -->
+  <div id="tab-swp" class="panel">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">💸 Withdrawal (SWP) Inputs</div>
+        <div class="field">
+          <label>Retirement Corpus (<span class="cur-sym">AED</span>)</label>
+          <input type="number" id="swp-corpus" value="1000000"/>
+        </div>
+        <div class="field">
+          <label>Monthly Withdrawal (<span class="cur-sym">AED</span>)</label>
+          <input type="number" id="swp-withdrawal" value="15000"/>
+        </div>
+        <div class="field">
+          <label>Post-Retirement Annual Return (%)</label>
+          <div class="range-row">
+            <input type="range" id="swp-return" min="1" max="50" value="25" oninput="document.getElementById('swp-returnVal').textContent=this.value+'%'">
+            <span class="range-val" id="swp-returnVal">25%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Inflation Rate (%)</label>
+          <div class="range-row">
+            <input type="range" id="swp-infl" min="0" max="12" value="5" oninput="document.getElementById('swp-inflVal').textContent=this.value+'%'">
+            <span class="range-val" id="swp-inflVal">5%</span>
+          </div>
+        </div>
+        <button class="calc-btn" onclick="calcSWP()">Calculate Withdrawals</button>
+
+        <div style="margin-top:20px;">
+          <div class="swp-summary">
+            <div class="swp-card">
+              <div class="s-label">10 Year Total Drawn</div>
+              <div class="s-val" id="swp-10y">—</div>
+            </div>
+            <div class="swp-card">
+              <div class="s-label">20 Year Total Drawn</div>
+              <div class="s-val" id="swp-20y">—</div>
+            </div>
+            <div class="swp-card">
+              <div class="s-label">30 Year Total Drawn</div>
+              <div class="s-val" id="swp-30y">—</div>
+            </div>
+          </div>
+          <div class="swp-summary">
+            <div class="swp-card">
+              <div class="s-label">Balance After 10yr</div>
+              <div class="s-val" id="swp-bal10">—</div>
+            </div>
+            <div class="swp-card">
+              <div class="s-label">Balance After 20yr</div>
+              <div class="s-val" id="swp-bal20">—</div>
+            </div>
+            <div class="swp-card">
+              <div class="s-label">Corpus Lasts</div>
+              <div class="s-val" id="swp-lasts">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Corpus Over Time (Withdrawal Phase)</div>
+        <div class="chart-wrap" style="height:320px;"><canvas id="swpChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 4: ASSET COMPARISON -->
+  <!-- ============================================================ -->
+  <div id="tab-compare" class="panel">
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">⚖️ Comparison Settings</div>
+          <div class="field">
+            <label>Target Corpus (<span class="cur-sym">AED</span>)</label>
+            <input type="number" id="cmp-corpus" value="3000000"/>
+          </div>
+          <div class="field">
+            <label>Investment Duration (Years)</label>
+            <div class="range-row">
+              <input type="range" id="cmp-years" min="1" max="30" value="10" oninput="document.getElementById('cmp-yearsVal').textContent=this.value+' yrs'">
+              <span class="range-val" id="cmp-yearsVal">10 yrs</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Starting Lumpsum (<span class="cur-sym">AED</span>)</label>
+            <input type="number" id="cmp-lump" value="0"/>
+          </div>
+          <button class="calc-btn" onclick="calcCompare()">Compare All Assets</button>
+        </div>
+
+        <!-- Asset CAGR customization -->
+        <div class="card">
+          <div class="card-title">🎛️ Customize Asset CAGRs</div>
+          <div id="assetCagrFields"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">📊 Corpus Growth Comparison</div>
+          <div class="chart-wrap" style="height:300px;"><canvas id="cmpChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Monthly SIP Required to Hit Target</div>
+          <div class="tbl-scroll">
+            <table class="comp-table" id="cmpTable">
+              <thead><tr>
+                <th>Asset</th><th>CAGR</th><th>Monthly SIP Needed</th><th>Total Invested</th><th>Corpus at Target</th>
+              </tr></thead>
+              <tbody id="cmpTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB 5: PORTFOLIO MIXER -->
+  <!-- ============================================================ -->
+  <div id="tab-portfolio" class="panel">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">🧩 Build Your Portfolio</div>
+        <div class="field">
+          <label>Total Monthly Investment (<span class="cur-sym">AED</span>)</label>
+          <input type="number" id="mix-monthly" value="10000" oninput="calcPortfolio()"/>
+        </div>
+        <div class="field">
+          <label>Investment Duration (Years)</label>
+          <div class="range-row">
+            <input type="range" id="mix-years" min="1" max="30" value="10" oninput="document.getElementById('mix-yearsVal').textContent=this.value+' yrs'; calcPortfolio()">
+            <span class="range-val" id="mix-yearsVal">10 yrs</span>
+          </div>
+        </div>
+        <div id="mixerSliders"></div>
+        <div class="info-box" id="mixAllocationWarning" style="display:none">⚠️ Allocations must add up to 100%</div>
+        <div style="margin-top:16px;">
+          <div class="results-grid">
+            <div class="result-card highlight">
+              <div class="r-label">Blended CAGR</div>
+              <div class="r-val" id="mix-blended">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">Final Corpus</div>
+              <div class="r-val" id="mix-corpus">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">BTC Alone Would Give</div>
+              <div class="r-val" id="mix-btcalone">—</div>
+            </div>
+            <div class="result-card">
+              <div class="r-label">BTC Advantage</div>
+              <div class="r-val" id="mix-advantage">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">🍩 Portfolio Allocation</div>
+          <div class="donut-wrap"><canvas id="donutChart"></canvas>
+            <div class="donut-center"><div class="dc-val" id="donut-btcpct">—</div><div class="dc-label">Bitcoin</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Portfolio vs BTC-Only Growth</div>
+          <div class="chart-wrap"><canvas id="mixChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ================================================================
+// GLOBAL STATE
+// ================================================================
+let currency = 'AED';
+let inrRate = 92;
+let fireMode = 'corpus';
+let wrMode = '4pct';
+let btcCagr = 29;
+let fireChart, sipChart, swpChart, cmpChart, donutChart, mixChart;
+
+const ASSETS = [
+  { id:'btc',    name:'Bitcoin',       color:'#f7931a', cagr:58.4 },
+  { id:'sp500',  name:'S&P 500',       color:'#3b82f6', cagr:11.39 },
+  { id:'qqq',    name:'QQQ (NASDAQ)',  color:'#a855f7', cagr:13.5 },
+  { id:'gold',   name:'Gold',          color:'#fbbf24', cagr:10.72 },
+  { id:'nifty',  name:'Nifty 50',      color:'#14b8a6', cagr:8.48 },
+  { id:'mf',     name:'Indian MF',     color:'#22c55e', cagr:20.07 },
+];
+
+const CUR_SYMBOLS = { AED:'AED', USD:'$', INR:'₹' };
+const CUR_TO_USD  = { AED:1/3.675, USD:1, INR:0 };
+
+function getRate(cur) {
+  if(cur==='AED') return 1/3.675;
+  if(cur==='USD') return 1;
+  inrRate = parseFloat(document.getElementById('inrRate').value)||92;
+  return 1/inrRate;
+}
+
+function toUSD(val) { return val * getRate(currency); }
+function fromUSD(val) {
+  if(currency==='AED') return val*3.675;
+  if(currency==='USD') return val;
+  inrRate = parseFloat(document.getElementById('inrRate').value)||92;
+  return val*inrRate;
+}
+
+function fmt(n, decimals=0) {
+  if(isNaN(n)||n===null) return '—';
+  const sym = CUR_SYMBOLS[currency]||'';
+  const prefix = currency==='USD' ? '$' : '';
+  const suffix = currency!=='USD' ? ' '+currency : '';
+  if(Math.abs(n)>=1e7) return prefix + (n/1e7).toFixed(2)+'Cr'+suffix;
+  if(Math.abs(n)>=1e5 && currency==='INR') return prefix+(n/1e5).toFixed(2)+'L'+suffix;
+  if(Math.abs(n)>=1000000) return prefix+(n/1000000).toFixed(2)+'M'+suffix;
+  if(Math.abs(n)>=1000) return prefix+(n/1000).toFixed(1)+'K'+suffix;
+  return prefix+n.toFixed(decimals)+suffix;
+}
+
+function setCurrency(c) {
+  currency = c;
+  document.querySelectorAll('.cur-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('inrFxWrap').style.display = c==='INR'?'flex':'none';
+  document.querySelectorAll('.cur-sym').forEach(el=>el.textContent=CUR_SYMBOLS[c]);
+  recalcAll();
+}
+
+function recalcAll() {
+  calcFIRE(); calcSIP(); calcSWP(); calcCompare(); calcPortfolio();
+}
+
+// ================================================================
+// TABS
+// ================================================================
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ================================================================
+// SCENARIO SELECT
+// ================================================================
+function selectScenario(el, cagr) {
+  document.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  btcCagr = cagr;
+  document.getElementById('btcCagr').value = cagr;
+  document.getElementById('btcCagrVal').textContent = cagr + '%';
+}
+function deselectScenarios() {
+  document.querySelectorAll('.scenario-card').forEach(c=>c.classList.remove('sel'));
+  btcCagr = parseFloat(document.getElementById('btcCagr').value);
+}
+
+// ================================================================
+// FIRE MODE
+// ================================================================
+function setFireMode(mode, btn) {
+  fireMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.fire-mode-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('fm-'+mode).classList.add('active');
+}
+function setWrMode(mode, btn) {
+  wrMode = mode;
+  document.querySelectorAll('.wr-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('customWrField').style.display = mode==='custom'?'block':'none';
+}
+
+// ================================================================
+// SIP FORMULA: future value of SIP
+// ================================================================
+function sipFV(monthly, annualCagr, years, lumpsum=0) {
+  const r = annualCagr/100;
+  const mr = Math.pow(1+r, 1/12)-1;
+  const n = years*12;
+  const sipCorpus = monthly * ((Math.pow(1+mr,n)-1)/mr) * (1+mr);
+  const lumpsumGrowth = lumpsum * Math.pow(1+r, years);
+  return sipCorpus + lumpsumGrowth;
+}
+
+// Required monthly SIP for target FV
+function requiredSIP(target, annualCagr, years, lumpsum=0) {
+  const r = annualCagr/100;
+  const mr = Math.pow(1+r,1/12)-1;
+  const n = years*12;
+  const lumpsumFV = lumpsum * Math.pow(1+r, years);
+  const remaining = target - lumpsumFV;
+  if(remaining<=0) return 0;
+  return remaining / (((Math.pow(1+mr,n)-1)/mr)*(1+mr));
+}
+
+// Required lumpsum now
+function requiredLumpsum(target, annualCagr, years) {
+  return target / Math.pow(1+annualCagr/100, years);
+}
+
+// ================================================================
+// FIRE CALCULATOR
+// ================================================================
+function calcFIRE() {
+  const cagr = parseFloat(document.getElementById('btcCagr').value)||btcCagr;
+
+  let corpus, years, lumpsum, inflRate, age, retAge, monthlySIP, totalInvested, gains, infoText;
+  let extraInfo = '';
+
+  if(fireMode==='corpus') {
+    age = parseInt(document.getElementById('a-age').value)||35;
+    retAge = parseInt(document.getElementById('a-retAge').value)||45;
+    const rawCorpus = parseFloat(document.getElementById('a-corpus').value)||3000000;
+    lumpsum = parseFloat(document.getElementById('a-lumpsum').value)||0;
+    inflRate = parseFloat(document.getElementById('a-infl').value)||5;
+    years = Math.max(retAge - age, 1);
+
+    // Inflation-adjusted corpus needed
+    corpus = rawCorpus * Math.pow(1+inflRate/100, years);
+    monthlySIP = requiredSIP(corpus, cagr, years, lumpsum);
+    const lumpsumNeeded = requiredLumpsum(corpus, cagr, years);
+    totalInvested = monthlySIP*12*years + lumpsum;
+    gains = corpus - totalInvested;
+
+    document.getElementById('res-sip').textContent = fmt(monthlySIP);
+    document.getElementById('res-sip-sub').textContent = `in BTC @ ${cagr}% CAGR`;
+    document.getElementById('res-corpus').textContent = fmt(corpus);
+    document.getElementById('res-corpus-sub').textContent = `target (${inflRate}% infl adj)`;
+    document.getElementById('res-years').textContent = years+' yrs';
+    document.getElementById('res-year-label').textContent = `retire at age ${retAge}`;
+    document.getElementById('res-lump').textContent = fmt(lumpsumNeeded);
+    document.getElementById('res-invested').textContent = fmt(totalInvested);
+    document.getElementById('res-gains').textContent = fmt(gains);
+    document.getElementById('res-gains-x').textContent = `${(corpus/Math.max(totalInvested,1)).toFixed(1)}× return`;
+
+    infoText = `<strong>Summary:</strong> To build a corpus of ${fmt(corpus)} (inflation-adjusted from ${fmt(rawCorpus)}) in <strong>${years} years</strong> by age ${retAge}, you need to SIP <strong>${fmt(monthlySIP)}/month</strong> into Bitcoin at ${cagr}% CAGR. Alternatively, a single lumpsum of <strong>${fmt(lumpsumNeeded)}</strong> today would achieve the same result.`;
+
+  } else {
+    age = parseInt(document.getElementById('b-age').value)||35;
+    retAge = parseInt(document.getElementById('b-retAge').value)||45;
+    const income = parseFloat(document.getElementById('b-income').value)||25000;
+    const expenses = parseFloat(document.getElementById('b-expenses').value)||15000;
+    const retExpenses = parseFloat(document.getElementById('b-retExpenses').value)||20000;
+    lumpsum = parseFloat(document.getElementById('b-lumpsum').value)||0;
+    const lifeExp = parseInt(document.getElementById('b-lifeExp').value)||85;
+    inflRate = parseFloat(document.getElementById('b-infl').value)||5;
+    years = Math.max(retAge - age, 1);
+    const retYears = Math.max(lifeExp - retAge, 0);
+
+    // Inflation-adjusted monthly expenses at retirement
+    const adjRetExpenses = retExpenses * Math.pow(1+inflRate/100, years);
+
+    // Corpus needed based on withdrawal strategy
+    let withdrawalRate;
+    if(wrMode==='4pct') withdrawalRate=0.04;
+    else if(wrMode==='25x') withdrawalRate=1/25;
+    else withdrawalRate=(parseFloat(document.getElementById('b-wrRate').value)||4)/100;
+
+    const annualRetExpenses = adjRetExpenses*12;
+    corpus = annualRetExpenses / withdrawalRate;
+
+    const savingsRate = Math.max(income - expenses, 0);
+    monthlySIP = requiredSIP(corpus, cagr, years, lumpsum);
+    const lumpsumNeeded = requiredLumpsum(corpus, cagr, years);
+    totalInvested = monthlySIP*12*years + lumpsum;
+    gains = corpus - totalInvested;
+
+    document.getElementById('res-sip').textContent = fmt(monthlySIP);
+    document.getElementById('res-sip-sub').textContent = `@ ${cagr}% BTC CAGR`;
+    document.getElementById('res-corpus').textContent = fmt(corpus);
+    document.getElementById('res-corpus-sub').textContent = `${(wrMode==='4pct'?'4% SWR':wrMode==='25x'?'25× rule':'custom')} method`;
+    document.getElementById('res-years').textContent = years+' yrs';
+    document.getElementById('res-year-label').textContent = `retire at ${retAge}`;
+    document.getElementById('res-lump').textContent = fmt(lumpsumNeeded);
+    document.getElementById('res-invested').textContent = fmt(totalInvested);
+    document.getElementById('res-gains').textContent = fmt(gains);
+    document.getElementById('res-gains-x').textContent = `${(corpus/Math.max(totalInvested,1)).toFixed(1)}× return`;
+
+    const feasible = savingsRate >= monthlySIP;
+    infoText = `<strong>Your Retirement Expenses (at age ${retAge}):</strong> ${fmt(adjRetExpenses)}/month (inflation adj). <strong>Required Corpus:</strong> ${fmt(corpus)} using the ${wrMode==='4pct'?'4% safe withdrawal':'25× annual expense'} rule. Monthly SIP needed: <strong>${fmt(monthlySIP)}</strong> ${feasible?'✅ <strong style="color:var(--green)">You can afford this!</strong>':'⚠️ <strong style="color:var(--red)">Above your current savings of '+fmt(savingsRate)+'/mo — reduce expenses or increase income.</strong>'}`;
+  }
+
+  document.getElementById('fireInfoBox').style.display = 'block';
+  document.getElementById('fireInfoBox').innerHTML = infoText;
+
+  // Draw growth chart
+  drawFireChart(years, cagr, monthlySIP, corpus, lumpsum||0);
+}
+
+function drawFireChart(years, cagr, monthlySIP, target, lumpsum) {
+  const labels=[], dataActual=[], dataInvested=[];
+  const r = cagr/100;
+  const mr = Math.pow(1+r,1/12)-1;
+  let corpus = lumpsum;
+
+  for(let m=0; m<=years*12; m+=3) {
+    // compound SIP
+    let val = monthlySIP*((Math.pow(1+mr,m)-1)/mr)*(1+mr) + lumpsum*Math.pow(1+r,m/12);
+    labels.push(m===0?'Now':`${Math.floor(m/12)}y${m%12?m%12+'m':''}`);
+    dataActual.push(Math.round(val));
+    dataInvested.push(Math.round(monthlySIP*m + lumpsum));
+  }
+
+  if(fireChart) fireChart.destroy();
+  fireChart = new Chart(document.getElementById('fireChart'), {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        { label:'Corpus Value', data:dataActual, borderColor:'#f7931a', backgroundColor:'rgba(247,147,26,0.08)', fill:true, tension:0.4, pointRadius:0 },
+        { label:'Amount Invested', data:dataInvested, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.05)', fill:true, tension:0, borderDash:[4,4], pointRadius:0 },
+      ]
+    },
+    options: chartOptions('Corpus Growth')
+  });
+}
+
+// ================================================================
+// SIP CALCULATOR
+// ================================================================
+function calcSIP() {
+  const monthly = parseFloat(document.getElementById('sip-amount').value)||4191;
+  const years = parseFloat(document.getElementById('sip-years').value)||5;
+  const cagr = parseFloat(document.getElementById('sip-cagr').value)||58.4;
+  const lump = parseFloat(document.getElementById('sip-lump').value)||0;
+
+  const final = sipFV(monthly, cagr, years, lump);
+  const invested = monthly*12*years + lump;
+  const returns = final - invested;
+
+  document.getElementById('sip-final').textContent = fmt(final);
+  document.getElementById('sip-invested').textContent = fmt(invested);
+  document.getElementById('sip-returns').textContent = fmt(returns);
+  document.getElementById('sip-mult').textContent = (final/Math.max(invested,1)).toFixed(2)+'×';
+
+  // Chart
+  const labels=[], dataCorpus=[], dataInvested=[];
+  const r=cagr/100, mr=Math.pow(1+r,1/12)-1;
+  for(let m=0;m<=years*12;m+=Math.max(1,Math.floor(years*12/60))){
+    const v = monthly*((Math.pow(1+mr,m)-1)/mr)*(1+mr)+lump*Math.pow(1+r,m/12);
+    labels.push(`${Math.floor(m/12)}y`);
+    dataCorpus.push(Math.round(v));
+    dataInvested.push(Math.round(monthly*m+lump));
+  }
+  if(sipChart) sipChart.destroy();
+  sipChart = new Chart(document.getElementById('sipChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Corpus',data:dataCorpus,backgroundColor:'rgba(247,147,26,0.7)',borderRadius:3},
+      {label:'Invested',data:dataInvested,backgroundColor:'rgba(59,130,246,0.4)',borderRadius:3},
+    ]},
+    options:{...chartOptions('SIP Growth'),plugins:{...chartOptions('').plugins,legend:{labels:{color:'#9a9590',font:{family:'Space Mono',size:11}}}}}
+  });
+}
+
+// ================================================================
+// SWP CALCULATOR
+// ================================================================
+function calcSWP() {
+  const corpus0 = parseFloat(document.getElementById('swp-corpus').value)||1000000;
+  const monthly = parseFloat(document.getElementById('swp-withdrawal').value)||15000;
+  const annualReturn = parseFloat(document.getElementById('swp-return').value)||25;
+  const inflRate = parseFloat(document.getElementById('swp-infl').value)||5;
+
+  const mr = Math.pow(1+annualReturn/100,1/12)-1;
+  const mir = Math.pow(1+inflRate/100,1/12)-1;
+
+  let bal = corpus0, totalDrawn=0;
+  const labels=[], dataBalance=[], dataWithdrawals=[];
+  let bal10,bal20,draw10,draw20, lastsYears='∞';
+  let curWithdrawal = monthly;
+
+  for(let m=1; m<=360; m++) {
+    if(m>1 && m%12===1) curWithdrawal *= (1+inflRate/100); // annual inflation step
+    bal = bal*(1+mr) - curWithdrawal;
+    totalDrawn += curWithdrawal;
+    if(bal<=0) { bal=0; if(lastsYears==='∞') lastsYears=`${Math.floor(m/12)} yrs`; }
+    if(m%6===0 || m<=12) {
+      labels.push(`${Math.floor(m/12)}y`);
+      dataBalance.push(Math.max(0,Math.round(bal)));
+      dataWithdrawals.push(Math.round(totalDrawn));
+    }
+    if(m===120){bal10=Math.round(bal);draw10=Math.round(totalDrawn);}
+    if(m===240){bal20=Math.round(bal);draw20=Math.round(totalDrawn);}
+  }
+  const draw30 = Math.round(totalDrawn);
+
+  document.getElementById('swp-10y').textContent = fmt(draw10);
+  document.getElementById('swp-20y').textContent = fmt(draw20);
+  document.getElementById('swp-30y').textContent = fmt(draw30);
+  document.getElementById('swp-bal10').textContent = fmt(bal10);
+  document.getElementById('swp-bal20').textContent = fmt(bal20);
+  document.getElementById('swp-lasts').textContent = lastsYears;
+
+  if(swpChart) swpChart.destroy();
+  swpChart = new Chart(document.getElementById('swpChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Corpus Balance',data:dataBalance,borderColor:'#f7931a',backgroundColor:'rgba(247,147,26,0.08)',fill:true,tension:0.4,pointRadius:0},
+      {label:'Total Withdrawn',data:dataWithdrawals,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.05)',fill:false,tension:0.3,pointRadius:0,borderDash:[5,3]},
+    ]},
+    options:chartOptions('Corpus & Withdrawals')
+  });
+}
+
+// ================================================================
+// ASSET COMPARISON
+// ================================================================
+function buildAssetCagrFields() {
+  const container = document.getElementById('assetCagrFields');
+  container.innerHTML = '';
+  ASSETS.forEach(a => {
+    const row = document.createElement('div');
+    row.className='asset-row';
+    row.innerHTML=`
+      <div class="asset-name"><span class="asset-dot" style="background:${a.color}"></span>${a.name}</div>
+      <input type="range" min="1" max="150" value="${a.cagr}" step="0.1"
+        oninput="document.getElementById('cagr-${a.id}').textContent=parseFloat(this.value).toFixed(1)+'%'; ASSETS.find(x=>x.id==='${a.id}').cagr=parseFloat(this.value);"
+        style="flex:1; accent-color:${a.color}; height:4px; width:100%;">
+      <span class="asset-cagr" id="cagr-${a.id}">${a.cagr}%</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function calcCompare() {
+  const targetRaw = parseFloat(document.getElementById('cmp-corpus').value)||3000000;
+  const years = parseFloat(document.getElementById('cmp-years').value)||10;
+  const lump = parseFloat(document.getElementById('cmp-lump').value)||0;
+
+  const tbody = document.getElementById('cmpTableBody');
+  tbody.innerHTML='';
+
+  const labels=[];
+  for(let y=0;y<=years;y++) labels.push('Yr '+y);
+
+  const datasets=[];
+
+  ASSETS.forEach(a => {
+    const sip = requiredSIP(targetRaw, a.cagr, years, lump);
+    const invested = sip*12*years+lump;
+    const corpus = sipFV(sip, a.cagr, years, lump);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML=`
+      <td><span class="badge ${a.id==='btc'?'badge-btc':''}" style="${a.id!=='btc'?'background:rgba(255,255,255,0.05);color:#9a9590;border:1px solid #2a2a2a;':''}">${a.name}</span></td>
+      <td style="color:${a.color};font-family:var(--font-mono)">${a.cagr}%</td>
+      <td style="font-family:var(--font-mono);${a.id==='btc'?'color:var(--orange);font-weight:700':''}">${fmt(sip)}/mo</td>
+      <td style="font-family:var(--font-mono)">${fmt(invested)}</td>
+      <td style="font-family:var(--font-mono)">${fmt(corpus)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // Growth data
+    const data=[];
+    for(let y=0;y<=years;y++){
+      data.push(Math.round(sipFV(sip, a.cagr, y, lump)));
+    }
+    datasets.push({label:a.name,data,borderColor:a.color,backgroundColor:'transparent',tension:0.4,pointRadius:0,borderWidth:a.id==='btc'?3:1.5,borderDash:a.id==='btc'?[]:[4,3]});
+  });
+
+  if(cmpChart) cmpChart.destroy();
+  cmpChart = new Chart(document.getElementById('cmpChart'),{
+    type:'line',
+    data:{labels,datasets},
+    options:chartOptions('Corpus Growth by Asset')
+  });
+}
+
+// ================================================================
+// PORTFOLIO MIXER
+// ================================================================
+function buildMixerSliders() {
+  const container = document.getElementById('mixerSliders');
+  container.innerHTML='';
+  ASSETS.forEach((a,i) => {
+    const pct = a.id==='btc'?40 : a.id==='sp500'?20 : a.id==='qqq'?15 : a.id==='gold'?10 : a.id==='nifty'?10:5;
+    const div=document.createElement('div');
+    div.className='field';
+    div.innerHTML=`
+      <label style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${a.color};display:inline-block;"></span>${a.name}</span>
+        <span style="color:${a.color}" id="mix-pct-${a.id}">${pct}%</span>
+      </label>
+      <input type="range" min="0" max="100" value="${pct}" id="mix-slider-${a.id}"
+        oninput="document.getElementById('mix-pct-${a.id}').textContent=this.value+'%'; calcPortfolio()"
+        style="accent-color:${a.color};height:4px;">
+    `;
+    container.appendChild(div);
+  });
+}
+
+function calcPortfolio() {
+  let total=0;
+  const allocs={};
+  ASSETS.forEach(a=>{
+    const v=parseInt(document.getElementById('mix-slider-'+a.id)?.value||0);
+    allocs[a.id]=v; total+=v;
+  });
+  const warn = document.getElementById('mixAllocationWarning');
+  if(Math.abs(total-100)>2){ warn.style.display='block'; return; }
+  warn.style.display='none';
+
+  const monthly = parseFloat(document.getElementById('mix-monthly').value)||10000;
+  const years = parseFloat(document.getElementById('mix-years').value)||10;
+
+  // Blended CAGR
+  let blendedCagr=0;
+  ASSETS.forEach(a=>{ blendedCagr += (allocs[a.id]/100)*a.cagr; });
+
+  const corpus = sipFV(monthly, blendedCagr, years);
+  const btcCorpus = sipFV(monthly, ASSETS.find(a=>a.id==='btc').cagr, years);
+  const advantage = btcCorpus / Math.max(corpus,1);
+
+  document.getElementById('mix-blended').textContent = blendedCagr.toFixed(2)+'%';
+  document.getElementById('mix-corpus').textContent = fmt(corpus);
+  document.getElementById('mix-btcalone').textContent = fmt(btcCorpus);
+  document.getElementById('mix-advantage').textContent = advantage.toFixed(2)+'× more';
+
+  // Donut chart
+  const pcts=ASSETS.map(a=>allocs[a.id]);
+  const colors=ASSETS.map(a=>a.color);
+  const btcPct = allocs['btc'];
+  document.getElementById('donut-btcpct').textContent=btcPct+'%';
+
+  if(donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donutChart'),{
+    type:'doughnut',
+    data:{labels:ASSETS.map(a=>a.name),datasets:[{data:pcts,backgroundColor:colors.map(c=>c+'99'),borderColor:colors,borderWidth:2}]},
+    options:{plugins:{legend:{labels:{color:'#9a9590',font:{family:'Space Mono',size:10}}},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.parsed+'%'}}}},cutout:'65%',animation:{duration:400}}
+  });
+
+  // Mix vs BTC chart
+  const labels=[], dataMix=[], dataBTC=[];
+  for(let y=0;y<=years;y++){
+    labels.push('Yr '+y);
+    dataMix.push(Math.round(sipFV(monthly,blendedCagr,y)));
+    dataBTC.push(Math.round(sipFV(monthly,ASSETS.find(a=>a.id==='btc').cagr,y)));
+  }
+  if(mixChart) mixChart.destroy();
+  mixChart = new Chart(document.getElementById('mixChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Your Portfolio',data:dataMix,borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,0.08)',fill:true,tension:0.4,pointRadius:0},
+      {label:'BTC Only',data:dataBTC,borderColor:'#f7931a',backgroundColor:'rgba(247,147,26,0.05)',fill:true,tension:0.4,pointRadius:0,borderWidth:2},
+    ]},
+    options:chartOptions('Portfolio vs BTC Only')
+  });
+}
+
+// ================================================================
+// CHART DEFAULTS
+// ================================================================
+function chartOptions(title) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{labels:{color:'#9a9590',font:{family:'Space Mono',size:10},boxWidth:10}},
+      tooltip:{backgroundColor:'#1a1a1a',borderColor:'#2a2a2a',borderWidth:1,titleColor:'#f7931a',bodyColor:'#9a9590',titleFont:{family:'Space Mono'},bodyFont:{family:'Space Mono',size:11},
+        callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+fmt(ctx.parsed.y);}}}
+    },
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a5550',font:{family:'Space Mono',size:9},maxRotation:0,maxTicksLimit:10}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a5550',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v);}}}
+    }
+  };
+}
+
+// ================================================================
+// INIT
+// ================================================================
+buildAssetCagrFields();
+buildMixerSliders();
+calcFIRE();
+calcSIP();
+calcSWP();
+calcCompare();
+calcPortfolio();
+</script>
+</body>
+</html>
