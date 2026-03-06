@@ -263,14 +263,14 @@
 
   /* SWP */
   .swp-summary {
-    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;
   }
   .swp-card {
     background:var(--bg3); border:1px solid var(--border); border-radius:10px;
-    padding:14px; text-align:center;
+    padding:10px 6px; text-align:center; overflow:hidden; min-width:0;
   }
-  .swp-card .s-label { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
-  .swp-card .s-val { font-size:16px; font-weight:800; color:var(--text); font-family:var(--font-mono); }
+  .swp-card .s-label { font-size:9px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; line-height:1.3; }
+  .swp-card .s-val { font-size:11px; font-weight:800; color:var(--text); font-family:var(--font-mono); white-space:pre; line-height:1.5; }
 
   /* INFO BOX */
   .info-box {
@@ -661,15 +661,63 @@
               <div class="s-val" id="swp-bal20">—</div>
             </div>
             <div class="swp-card">
-              <div class="s-label">Corpus Lasts</div>
+              <div class="s-label" id="swp-lasts-label">Balance After 30yr</div>
               <div class="s-val" id="swp-lasts">—</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-title">📊 Corpus Over Time (Withdrawal Phase)</div>
-        <div class="chart-wrap" style="height:320px;"><canvas id="swpChart"></canvas></div>
+      <div>
+        <div class="card">
+          <div class="card-title">📊 Corpus Over Time (Withdrawal Phase)</div>
+          <div class="chart-wrap" style="height:320px;"><canvas id="swpChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-title">💡 How Inflation Adjustment Works</div>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:1.8;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+              <div style="color:var(--green);font-weight:700;margin-bottom:8px;">✅ Inflation = 0%</div>
+              <div style="color:var(--text2);">Your withdrawal stays <strong style="color:var(--text);">flat forever</strong>.</div>
+              <div style="margin-top:8px;color:var(--text3);">e.g. 10,000/mo every month for 10 years</div>
+              <div style="margin-top:8px;color:var(--text);">Total = 10,000 × 120 = <strong style="color:var(--green);">1,200,000</strong></div>
+              <div style="margin-top:8px;color:var(--text3);font-size:11px;">Matches tools like Groww — simple fixed withdrawal.</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;">
+              <div style="color:var(--orange);font-weight:700;margin-bottom:8px;">⚡ Inflation = 5%</div>
+              <div style="color:var(--text2);">Withdrawal <strong style="color:var(--text);">increases every year</strong> to maintain purchasing power.</div>
+              <div style="margin-top:8px;color:var(--text3);">Year 1: 10,000 → Year 2: 10,500 → Year 3: 11,025 → ...</div>
+              <div style="margin-top:8px;color:var(--text);">By Year 10 you're withdrawing ~<strong style="color:var(--orange);">15,513/mo</strong></div>
+              <div style="margin-top:8px;color:var(--text3);font-size:11px;">More realistic — accounts for rising cost of living.</div>
+            </div>
+          </div>
+
+          <div style="background:var(--orange-dim);border:1px solid var(--orange-glow);border-radius:10px;padding:14px 16px;">
+            <span style="color:var(--orange);font-weight:700;">Why does this matter?</span>
+            <span style="color:var(--text2);margin-left:8px;">10,000 AED today won't buy the same things in 5 years. At 5% inflation, you'd need ~12,763 AED in 5 years to maintain the same lifestyle. The inflation adjustment automatically steps up your withdrawal each year so your <strong style="color:var(--text);">real spending power stays the same</strong> — not just the number.</span>
+          </div>
+
+          <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div style="color:var(--text3);font-size:10px;margin-bottom:4px;">FIXED INCOME NEED</div>
+              <div style="color:var(--text);">Set to <strong style="color:var(--green);">0%</strong></div>
+              <div style="color:var(--text3);font-size:10px;margin-top:4px;">e.g. rent, pension</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div style="color:var(--text3);font-size:10px;margin-bottom:4px;">REALISTIC RETIREMENT</div>
+              <div style="color:var(--text);">Set to <strong style="color:var(--orange);">5–6%</strong></div>
+              <div style="color:var(--text3);font-size:10px;margin-top:4px;">real world inflation</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <div style="color:var(--text3);font-size:10px;margin-bottom:4px;">COMPARE WITH GROWW</div>
+              <div style="color:var(--text);">Set to <strong style="color:var(--blue);">0%</strong></div>
+              <div style="color:var(--text3);font-size:10px;margin-top:4px;">Groww doesn't inflate</div>
+            </div>
+          </div>
+
+        </div>
+        </div>
       </div>
     </div>
   </div>
@@ -833,6 +881,14 @@ function fmt(n, decimals=0) {
   if(Math.abs(n)>=1000000) return prefix+(n/1000000).toFixed(2)+'M'+suffix;
   if(Math.abs(n)>=1000) return prefix+(n/1000).toFixed(1)+'K'+suffix;
   return prefix+n.toFixed(decimals)+suffix;
+}
+
+function fmtFull(n) {
+  if(isNaN(n)||n===null) return '—';
+  const prefix = currency==='USD' ? '$' : '';
+  const suffix = currency!=='USD' ? currency : '';
+  const num = prefix + Math.round(n).toLocaleString('en-US');
+  return suffix ? num + '\n' + suffix : num;
 }
 
 function setCurrency(c) {
@@ -1048,9 +1104,9 @@ function calcSIP() {
   const invested = monthly*12*years + lump;
   const returns = final - invested;
 
-  document.getElementById('sip-final').textContent = fmt(final);
-  document.getElementById('sip-invested').textContent = fmt(invested);
-  document.getElementById('sip-returns').textContent = fmt(returns);
+  document.getElementById('sip-final').textContent = fmtFull(final);
+  document.getElementById('sip-invested').textContent = fmtFull(invested);
+  document.getElementById('sip-returns').textContent = fmtFull(returns);
   document.getElementById('sip-mult').textContent = (final/Math.max(invested,1)).toFixed(2)+'×';
 
   // Chart
@@ -1077,10 +1133,11 @@ function calcSIP() {
 // SWP CALCULATOR
 // ================================================================
 function calcSWP() {
-  const corpus0 = parseFloat(document.getElementById('swp-corpus').value)||1000000;
-  const monthly = parseFloat(document.getElementById('swp-withdrawal').value)||15000;
-  const annualReturn = parseFloat(document.getElementById('swp-return').value)||25;
-  const inflRate = parseFloat(document.getElementById('swp-infl').value)||5;
+  const corpus0 = parseFloat(document.getElementById('swp-corpus').value) || 1000000;
+  const monthly = parseFloat(document.getElementById('swp-withdrawal').value) || 15000;
+  const annualReturn = parseFloat(document.getElementById('swp-return').value) || 25;
+  const _inflRaw = document.getElementById('swp-infl').value;
+  const inflRate = (_inflRaw === '' || _inflRaw === null) ? 0 : parseFloat(_inflRaw);
 
   const mr = Math.pow(1+annualReturn/100,1/12)-1;
   const mir = Math.pow(1+inflRate/100,1/12)-1;
@@ -1104,13 +1161,14 @@ function calcSWP() {
     if(m===240){bal20=Math.round(bal);draw20=Math.round(totalDrawn);}
   }
   const draw30 = Math.round(totalDrawn);
+  const bal30 = Math.round(bal);
 
-  document.getElementById('swp-10y').textContent = fmt(draw10);
-  document.getElementById('swp-20y').textContent = fmt(draw20);
-  document.getElementById('swp-30y').textContent = fmt(draw30);
-  document.getElementById('swp-bal10').textContent = fmt(bal10);
-  document.getElementById('swp-bal20').textContent = fmt(bal20);
-  document.getElementById('swp-lasts').textContent = lastsYears;
+  document.getElementById('swp-10y').textContent = fmtFull(draw10);
+  document.getElementById('swp-20y').textContent = fmtFull(draw20);
+  document.getElementById('swp-30y').textContent = fmtFull(draw30);
+  document.getElementById('swp-bal10').textContent = fmtFull(bal10);
+  document.getElementById('swp-bal20').textContent = fmtFull(bal20);
+  if (lastsYears === '∞') { document.getElementById('swp-lasts-label').textContent = 'Balance After 30yr'; document.getElementById('swp-lasts').textContent = fmtFull(bal30); } else { document.getElementById('swp-lasts-label').textContent = 'Corpus Lasts'; document.getElementById('swp-lasts').textContent = lastsYears; }
 
   if(swpChart) swpChart.destroy();
   swpChart = new Chart(document.getElementById('swpChart'),{
