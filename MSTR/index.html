@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSTR Price Model | CoinStats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080810;
+    --bg2: #0d0d18;
+    --bg3: #12121f;
+    --surface: rgba(255,255,255,0.035);
+    --surface-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.13);
+    --btc: #F7931A;
+    --btc-dim: rgba(247,147,26,0.15);
+    --btc-glow: rgba(247,147,26,0.35);
+    --green: #22d47a;
+    --green-dim: rgba(34,212,122,0.12);
+    --yellow: #f5c542;
+    --yellow-dim: rgba(245,197,66,0.12);
+    --red: #ff4d6d;
+    --red-dim: rgba(255,77,109,0.12);
+    --text: #e8e8f0;
+    --text-dim: rgba(232,232,240,0.5);
+    --text-muted: rgba(232,232,240,0.3);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Dot grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ambient glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 40%;
+    background: radial-gradient(ellipse, rgba(247,147,26,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-badge {
+    width: 42px;
+    height: 42px;
+    background: var(--btc);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 14px;
+    color: #000;
+    letter-spacing: -0.5px;
+    box-shadow: 0 0 20px var(--btc-glow);
+  }
+
+  .header-title h1 {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+
+  .header-title span {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .live-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+  }
+
+  .live-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .stat-card:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-bright);
+  }
+
+  .stat-card.btc-card { border-color: rgba(247,147,26,0.25); }
+  .stat-card.btc-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(247,147,26,0.05), transparent 60%);
+    pointer-events: none;
+  }
+
+  .stat-card.mstr-card { border-color: rgba(255,255,255,0.1); }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    transition: all 0.4s;
+  }
+
+  .stat-value.loading { color: var(--text-muted); font-size: 16px; }
+
+  .stat-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .btc-color { color: var(--btc); }
+  .green-color { color: var(--green); }
+  .yellow-color { color: var(--yellow); }
+  .red-color { color: var(--red); }
+  .white-color { color: var(--text); }
+
+  /* ── UNDERVALUED BADGE ── */
+  .stat-card.nav-diff { }
+  .nav-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  /* ── ZONE GAUGE ── */
+  .zone-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .zone-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .zone-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .mnav-display {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .zone-bar-wrap {
+    position: relative;
+    height: 32px;
+    border-radius: 8px;
+    overflow: visible;
+    margin: 8px 0 28px;
+  }
+
+  .zone-bar {
+    display: flex;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .zone-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: opacity 0.3s;
+  }
+
+  .zone-segment.accum {
+    background: linear-gradient(90deg, rgba(34,212,122,0.2), rgba(34,212,122,0.35));
+    flex: 2;
+    color: var(--green);
+    border-right: 1px solid rgba(34,212,122,0.3);
+  }
+
+  .zone-segment.hold {
+    background: linear-gradient(90deg, rgba(245,197,66,0.2), rgba(245,197,66,0.35));
+    flex: 1;
+    color: var(--yellow);
+    border-right: 1px solid rgba(245,197,66,0.3);
+  }
+
+  .zone-segment.sell {
+    background: linear-gradient(90deg, rgba(255,77,109,0.2), rgba(255,77,109,0.35));
+    flex: 1;
+    color: var(--red);
+  }
+
+  .zone-marker {
+    position: absolute;
+    top: -6px;
+    bottom: -6px;
+    width: 3px;
+    background: white;
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.8);
+    transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .zone-marker::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 9px;
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  .zone-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .zone-label-item {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .zone-label-item::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .zone-label-item.accum::before { background: var(--green-dim); border: 1px solid var(--green); }
+  .zone-label-item.hold::before { background: var(--yellow-dim); border: 1px solid var(--yellow); }
+  .zone-label-item.sell::before { background: var(--red-dim); border: 1px solid var(--red); }
+
+  /* ── TWO COLUMN LAYOUT ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .card-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--btc);
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 24px;
+    height: 2px;
+    border-radius: 2px;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 280px;
+  }
+
+  /* ── PROJECTION PANEL ── */
+  .projection-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .projection-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .slider-wrap {
+    margin: 16px 0;
+  }
+
+  .slider-btc-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .slider-btc-price {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--btc);
+    letter-spacing: -1px;
+  }
+
+  .slider-btc-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border-bright);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--btc);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 12px var(--btc-glow);
+    transition: transform 0.1s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--btc);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 0 12px var(--btc-glow);
+  }
+
+  .slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .slider-tick {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+
+  .proj-results {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .proj-row {
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .proj-row.x1 {
+    background: rgba(34,212,122,0.08);
+    border-color: rgba(34,212,122,0.2);
+  }
+
+  .proj-row.x2 {
+    background: rgba(245,197,66,0.08);
+    border-color: rgba(245,197,66,0.2);
+  }
+
+  .proj-row.x3 {
+    background: rgba(255,77,109,0.08);
+    border-color: rgba(255,77,109,0.2);
+  }
+
+  .proj-row-left { }
+
+  .proj-mnav {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .proj-zone {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .proj-price {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    text-align: right;
+  }
+
+  .proj-updown {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-align: right;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ── SATS PER SHARE ── */
+  .sats-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sats-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+
+  .sats-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sats-metric .stat-label { margin-bottom: 4px; }
+  .sats-metric .stat-value { font-size: 26px; }
+
+  .sats-divider {
+    width: 1px;
+    height: 50px;
+    background: var(--border);
+    align-self: center;
+  }
+
+  @media (max-width: 600px) {
+    .sats-divider { display: none; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .stat-value { font-size: 18px; }
+  }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer {
+    margin-top: 32px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .disclaimer-icon {
+    color: var(--btc);
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 12px;
+  }
+
+  /* ── MANUAL INPUT ── */
+  .manual-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255,77,109,0.06);
+    border: 1px solid rgba(255,77,109,0.2);
+    border-radius: 8px;
+  }
+
+  .manual-input-wrap label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  .manual-input-wrap input[type=number] {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    width: 100px;
+  }
+
+  .mstr-source-note {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── GLOW ANIMATION ON UPDATE ── */
+  @keyframes flash-update {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  .updated { animation: flash-update 0.4s ease-out; }
+
+  /* ── DATA SOURCES ── */
+  .data-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .data-source-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+  }
+
+  .data-source-tag .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo-badge">₿</div>
+      <div class="header-title">
+        <h1>MSTR Price Model</h1>
+        <span>STRATEGY INC · MICROSTRATEGY · NASDAQ: MSTR</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="live-dot">LIVE</span>
+      <span class="last-updated" id="lastUpdated">Fetching data…</span>
+    </div>
+  </header>
+
+  <!-- DATA SOURCES -->
+  <div class="data-row">
+    <div class="data-source-tag"><span class="dot"></span> BTC: CoinGecko API</div>
+    <div class="data-source-tag"><span class="dot"></span> Holdings: 762,099 BTC (Mar 22, 2026)</div>
+    <div class="data-source-tag"><span class="dot"></span> Shares: 338.6M (Mar 20, 2026)</div>
+  </div>
+
+  <!-- MAIN STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card btc-card">
+      <div class="stat-label">BTC Price</div>
+      <div class="stat-value btc-color" id="btcPrice">—</div>
+      <div class="stat-sub" id="btcChange">Loading…</div>
+    </div>
+
+    <div class="stat-card mstr-card">
+      <div class="stat-label">MSTR Price</div>
+      <div class="stat-value white-color" id="mstrPrice">—</div>
+      <div class="stat-sub" id="mstrPriceNote">Enter below if auto-fetch fails</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Current mNAV</div>
+      <div class="stat-value" id="mnavValue" style="color:var(--yellow)">—</div>
+      <div class="stat-sub">Market Cap / BTC NAV</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Fair Value (1× mNAV)</div>
+      <div class="stat-value green-color" id="fv1x">—</div>
+      <div class="stat-sub">BTC NAV / Shares Out.</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Fair Value (2× mNAV)</div>
+      <div class="stat-value yellow-color" id="fv2x">—</div>
+      <div class="stat-sub">Historical premium</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Fair Value (3× mNAV)</div>
+      <div class="stat-value red-color" id="fv3x">—</div>
+      <div class="stat-sub">Bull cycle peak range</div>
+    </div>
+
+    <div class="stat-card nav-diff">
+      <div class="stat-label">vs BTC NAV</div>
+      <div class="stat-value" id="undervalued">—</div>
+      <div class="stat-sub" id="undervaluedLabel">Mkt Cap vs BTC NAV</div>
+    </div>
+  </div>
+
+  <!-- MSTR MANUAL INPUT (shown if auto-fetch fails) -->
+  <div class="manual-input-wrap" id="manualInputWrap" style="display:none">
+    <label>⚠ MSTR price (manual):</label>
+    <span style="font-family:var(--mono);font-size:14px;color:var(--text-muted)">$</span>
+    <input type="number" id="mstrManual" placeholder="e.g. 285" min="1" max="9999" step="0.01">
+    <button onclick="applyManualMSTR()" style="background:var(--btc);color:#000;border:none;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;font-weight:600;">Apply</button>
+  </div>
+  <div class="mstr-source-note" id="mstrSourceNote" style="margin-bottom:16px;"></div>
+
+  <!-- ZONE GAUGE -->
+  <div class="zone-section">
+    <div class="zone-header">
+      <div class="zone-title">mNAV Zone Indicator</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div class="mnav-display" id="zonesMnav">—</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted)" id="zonesLabel">calculating…</div>
+      </div>
+    </div>
+    <div class="zone-bar-wrap">
+      <div class="zone-bar">
+        <div class="zone-segment accum">ACCUMULATE · 1×–2×</div>
+        <div class="zone-segment hold">HOLD · 2×–2.5×</div>
+        <div class="zone-segment sell">SELL · 2.5×+</div>
+      </div>
+      <div class="zone-marker" id="zoneMarker" style="left:0%" data-label=""></div>
+    </div>
+    <div class="zone-labels">
+      <div class="zone-label-item accum">Accumulate (1× – 2×mNAV)</div>
+      <div class="zone-label-item hold">Hold (2× – 2.5×mNAV)</div>
+      <div class="zone-label-item sell">Sell Zone (2.5×+ mNAV)</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID: Chart + Projection -->
+  <div class="main-grid">
+
+    <!-- CHART -->
+    <div class="chart-card">
+      <div class="card-title"><span class="card-title-dot"></span> MSTR Fair Value vs BTC Price</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> 1× mNAV (fair value)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> 2× mNAV (premium)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> 3× mNAV (cycle top)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.5);border-top:1px dashed rgba(255,255,255,0.4)"></div> MSTR price</div>
+      </div>
+      <div class="chart-container">
+        <canvas id="mstrChart"></canvas>
+      </div>
+    </div>
+
+    <!-- PROJECTION PANEL -->
+    <div class="projection-card">
+      <div class="card-title"><span class="card-title-dot"></span> BTC Price Projector</div>
+      <div class="slider-wrap">
+        <div class="slider-btc-label">
+          <div>
+            <div class="slider-btc-price" id="sliderBtcDisplay">$80,000</div>
+            <div class="slider-btc-sub">projected BTC price</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted)">drag to adjust</div>
+          </div>
+        </div>
+        <input type="range" id="btcSlider" min="40000" max="500000" step="5000" value="80000">
+        <div class="slider-ticks">
+          <span class="slider-tick">$40K</span>
+          <span class="slider-tick">$150K</span>
+          <span class="slider-tick">$300K</span>
+          <span class="slider-tick">$500K</span>
+        </div>
+      </div>
+
+      <div class="proj-results">
+        <div class="proj-row x1">
+          <div class="proj-row-left">
+            <div class="proj-mnav" style="color:var(--green)">1× mNAV</div>
+            <div class="proj-zone">ACCUMULATE · Fair Value</div>
+          </div>
+          <div>
+            <div class="proj-price green-color" id="proj1x">—</div>
+            <div class="proj-updown" id="proj1xUpdown">—</div>
+          </div>
+        </div>
+        <div class="proj-row x2">
+          <div class="proj-row-left">
+            <div class="proj-mnav" style="color:var(--yellow)">2× mNAV</div>
+            <div class="proj-zone">HOLD · Healthy Premium</div>
+          </div>
+          <div>
+            <div class="proj-price yellow-color" id="proj2x">—</div>
+            <div class="proj-updown" id="proj2xUpdown">—</div>
+          </div>
+        </div>
+        <div class="proj-row x3">
+          <div class="proj-row-left">
+            <div class="proj-mnav" style="color:var(--red)">3× mNAV</div>
+            <div class="proj-zone">SELL · Cycle Top Range</div>
+          </div>
+          <div>
+            <div class="proj-price red-color" id="proj3x">—</div>
+            <div class="proj-updown" id="proj3xUpdown">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);line-height:1.6">
+          <div>₿ Holdings: <span style="color:var(--text)">762,099 BTC</span></div>
+          <div>Shares Out: <span style="color:var(--text)">338.6M</span></div>
+          <div>BTC/Share: <span style="color:var(--btc)" id="sidebarBtcPerShare">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-grid -->
+
+  <!-- SATS PER SHARE CARD -->
+  <div class="sats-card">
+    <div class="sats-metric">
+      <div class="stat-label">Sats per MSTR Share</div>
+      <div class="stat-value btc-color" id="satsPerShare">—</div>
+      <div class="stat-sub">1 MSTR ≈ X sats of BTC exposure</div>
+    </div>
+    <div class="sats-divider"></div>
+    <div class="sats-metric">
+      <div class="stat-label">BTC per Share</div>
+      <div class="stat-value white-color" id="btcPerShare">—</div>
+      <div class="stat-sub">762,099 BTC ÷ 338.6M shares</div>
+    </div>
+    <div class="sats-divider"></div>
+    <div class="sats-metric">
+      <div class="stat-label">BTC NAV (Total)</div>
+      <div class="stat-value" id="btcNav" style="color:var(--btc)">—</div>
+      <div class="stat-sub">Holdings × BTC price</div>
+    </div>
+    <div class="sats-divider"></div>
+    <div class="sats-metric">
+      <div class="stat-label">Avg Cost Basis</div>
+      <div class="stat-value white-color">$75,694</div>
+      <div class="stat-sub">per BTC acquired</div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <span class="disclaimer-icon">⚠</span>
+    <span>Not financial advice. mNAV zones are indicative thresholds based on historical MSTR trading behavior. MSTR frequently trades at a premium to BTC NAV due to leverage, optionality, and institutional access. Data is updated in real-time from public APIs. BTC holdings and share count are sourced from Strategy Inc SEC filings and may lag by days. Always verify at strategy.com.</span>
+  </div>
+
+</div><!-- end page-wrap -->
+
+<script>
+// ── CONSTANTS ──
+const BTC_HOLDINGS = 762099;
+const SHARES_OUT = 338600000;
+const BTC_PER_SHARE = BTC_HOLDINGS / SHARES_OUT;
+const SATS_PER_BTC = 100000000;
+
+let liveBtcPrice = 82000;   // fallback
+let liveMstrPrice = null;
+let chartInstance = null;
+let sliderBtcPrice = 80000;
+
+// ── FORMAT HELPERS ──
+function fmt$(n, decimals=0) {
+  if (n === null || isNaN(n)) return '—';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+}
+
+function fmtSats(n) {
+  if (!n) return '—';
+  const s = Math.round(n * SATS_PER_BTC);
+  return s.toLocaleString('en-US') + ' sats';
+}
+
+function fmtPct(n, plus=true) {
+  if (n === null || isNaN(n)) return '—';
+  const s = (plus && n > 0 ? '+' : '') + n.toFixed(1) + '%';
+  return s;
+}
+
+// ── FETCH BTC PRICE ──
+async function fetchBtcPrice() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {signal: AbortSignal.timeout(8000)});
+    const d = await r.json();
+    liveBtcPrice = d.bitcoin.usd;
+    const change = d.bitcoin.usd_24h_change;
+    document.getElementById('btcChange').textContent = `24h: ${fmtPct(change)}`;
+    document.getElementById('btcChange').style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+    return liveBtcPrice;
+  } catch(e) {
+    console.warn('BTC fetch error:', e);
+    document.getElementById('btcChange').textContent = 'price may be delayed';
+    return liveBtcPrice;
+  }
+}
+
+// ── FETCH MSTR PRICE ──
+async function fetchMstrPrice() {
+  // Try Yahoo Finance (unofficial API - may have CORS restrictions in some environments)
+  const urls = [
+    'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=1d',
+    'https://query2.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=1d',
+  ];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, {signal: AbortSignal.timeout(6000)});
+      const d = await r.json();
+      const price = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (price) {
+        liveMstrPrice = price;
+        document.getElementById('mstrPriceNote').textContent = 'via Yahoo Finance';
+        document.getElementById('mstrSourceNote').textContent = '';
+        return price;
+      }
+    } catch(e) { /* try next */ }
+  }
+  // Fallback: show manual input
+  showManualInput();
+  return null;
+}
+
+function showManualInput() {
+  document.getElementById('manualInputWrap').style.display = 'flex';
+  document.getElementById('mstrSourceNote').textContent = '⚠ Auto-fetch unavailable in this environment. Enter MSTR price manually.';
+  document.getElementById('mstrPriceNote').textContent = 'Manual input required';
+}
+
+function applyManualMSTR() {
+  const val = parseFloat(document.getElementById('mstrManual').value);
+  if (val > 0) {
+    liveMstrPrice = val;
+    document.getElementById('mstrManual').value = '';
+    document.getElementById('mstrPriceNote').textContent = 'Manual input applied';
+    updateAll();
+  }
+}
+
+// ── CALCULATE mNAV ──
+function calcMnav(mstrPrice, btcPrice) {
+  const btcNav = BTC_HOLDINGS * btcPrice;
+  const marketCap = SHARES_OUT * mstrPrice;
+  return marketCap / btcNav;
+}
+
+function calcFairValue(mnav, btcPrice) {
+  const btcNav = BTC_HOLDINGS * btcPrice;
+  return (mnav * btcNav) / SHARES_OUT;
+}
+
+// ── UPDATE ZONE MARKER ──
+function updateZoneMarker(mnav) {
+  const el = document.getElementById('zoneMarker');
+  // Zone: 1x to 3.5x (beyond is capped)
+  // Bar spans 1x to 3.5x
+  const minMnav = 1.0;
+  const maxMnav = 3.5;
+  let pct = ((mnav - minMnav) / (maxMnav - minMnav)) * 100;
+  pct = Math.max(2, Math.min(98, pct));
+  el.style.left = pct + '%';
+  el.setAttribute('data-label', mnav.toFixed(2) + '×');
+
+  // Zones: accum = 1x-2x (57% of bar 0-57%), hold = 2x-2.5x (57-71%), sell = 2.5x+ (71-100%)
+  // Actually let's calculate based on 1 to 3.5 range:
+  // accum: 1.0 - 2.0 → 0 - 40%
+  // hold: 2.0 - 2.5 → 40 - 60%
+  // sell: 2.5 - 3.5 → 60 - 100%
+  // But we need the zone-bar flex ratios to match. 
+  // flex: 2 (accum), 1 (hold), 1 (sell) = 4 total
+  // accum = 50%, hold = 25%, sell = 25%
+  // 1x → 0%, 2x → 50%, 2.5x → 75%, 3.5x → ?
+  // Let me use a custom pct formula that matches the flex layout:
+  const accumEnd = 2.0;
+  const holdEnd = 2.5;
+  const sellEnd = 3.5;
+  let barPct;
+  if (mnav <= accumEnd) {
+    barPct = ((mnav - minMnav) / (accumEnd - minMnav)) * 50;
+  } else if (mnav <= holdEnd) {
+    barPct = 50 + ((mnav - accumEnd) / (holdEnd - accumEnd)) * 25;
+  } else {
+    barPct = 75 + ((mnav - holdEnd) / (sellEnd - holdEnd)) * 25;
+  }
+  barPct = Math.max(2, Math.min(98, barPct));
+  el.style.left = barPct + '%';
+}
+
+// ── UPDATE ALL DISPLAYS ──
+function updateAll() {
+  const btcPrice = liveBtcPrice;
+  const mstrPrice = liveMstrPrice;
+
+  // BTC price
+  const btcEl = document.getElementById('btcPrice');
+  btcEl.textContent = fmt$(btcPrice);
+  btcEl.classList.remove('updated'); void btcEl.offsetWidth; btcEl.classList.add('updated');
+
+  // MSTR price
+  if (mstrPrice !== null) {
+    const mstrEl = document.getElementById('mstrPrice');
+    mstrEl.textContent = fmt$(mstrPrice, 2);
+    mstrEl.classList.remove('updated'); void mstrEl.offsetWidth; mstrEl.classList.add('updated');
+  } else {
+    document.getElementById('mstrPrice').textContent = '—';
+  }
+
+  // BTC NAV
+  const btcNav = BTC_HOLDINGS * btcPrice;
+  document.getElementById('btcNav').textContent = fmt$(btcNav);
+
+  // BTC/share & Sats/share
+  document.getElementById('btcPerShare').textContent = BTC_PER_SHARE.toFixed(6) + ' BTC';
+  document.getElementById('satsPerShare').textContent = fmtSats(BTC_PER_SHARE);
+  document.getElementById('sidebarBtcPerShare').textContent = BTC_PER_SHARE.toFixed(6);
+
+  // Fair values
+  document.getElementById('fv1x').textContent = fmt$(calcFairValue(1, btcPrice), 2);
+  document.getElementById('fv2x').textContent = fmt$(calcFairValue(2, btcPrice), 2);
+  document.getElementById('fv3x').textContent = fmt$(calcFairValue(3, btcPrice), 2);
+
+  // mNAV + zone
+  if (mstrPrice !== null) {
+    const mnav = calcMnav(mstrPrice, btcPrice);
+    const mnavEl = document.getElementById('mnavValue');
+    mnavEl.textContent = mnav.toFixed(2) + '×';
+
+    let mnavColor = 'var(--green)';
+    let zoneText = 'Accumulation Zone';
+    if (mnav > 2.5) { mnavColor = 'var(--red)'; zoneText = 'Sell Zone'; }
+    else if (mnav > 2.0) { mnavColor = 'var(--yellow)'; zoneText = 'Hold Zone'; }
+    mnavEl.style.color = mnavColor;
+
+    document.getElementById('zonesMnav').textContent = mnav.toFixed(2) + '×';
+    document.getElementById('zonesMnav').style.color = mnavColor;
+    document.getElementById('zonesLabel').textContent = zoneText;
+    updateZoneMarker(mnav);
+
+    // vs NAV
+    const prem = (mnav - 1) * 100;
+    const underEl = document.getElementById('undervalued');
+    const underLabel = document.getElementById('undervaluedLabel');
+    if (prem >= 0) {
+      underEl.textContent = '+' + prem.toFixed(1) + '%';
+      underEl.style.color = prem > 100 ? 'var(--red)' : 'var(--yellow)';
+      underLabel.textContent = 'Premium to BTC NAV';
+    } else {
+      underEl.textContent = prem.toFixed(1) + '%';
+      underEl.style.color = 'var(--green)';
+      underLabel.textContent = 'Discount to BTC NAV';
+    }
+  }
+
+  // Update slider projections
+  updateSlider();
+  updateChart(btcPrice, mstrPrice);
+
+  // Timestamp
+  document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── SLIDER ──
+function updateSlider() {
+  const btcP = sliderBtcPrice;
+  const mstrP = liveMstrPrice;
+
+  document.getElementById('sliderBtcDisplay').textContent = fmt$(btcP);
+
+  const p1 = calcFairValue(1, btcP);
+  const p2 = calcFairValue(2, btcP);
+  const p3 = calcFairValue(3, btcP);
+
+  document.getElementById('proj1x').textContent = fmt$(p1, 2);
+  document.getElementById('proj2x').textContent = fmt$(p2, 2);
+  document.getElementById('proj3x').textContent = fmt$(p3, 2);
+
+  if (mstrP) {
+    const up1 = ((p1 - mstrP) / mstrP) * 100;
+    const up2 = ((p2 - mstrP) / mstrP) * 100;
+    const up3 = ((p3 - mstrP) / mstrP) * 100;
+    const arrow = n => n > 0 ? '▲' : '▼';
+    const col = n => n > 0 ? 'var(--green)' : 'var(--red)';
+
+    for (const [id, up] of [['proj1xUpdown', up1], ['proj2xUpdown', up2], ['proj3xUpdown', up3]]) {
+      const el = document.getElementById(id);
+      el.textContent = arrow(up) + ' ' + Math.abs(up).toFixed(1) + '% from current';
+      el.style.color = col(up);
+    }
+  }
+}
+
+document.getElementById('btcSlider').addEventListener('input', e => {
+  sliderBtcPrice = parseInt(e.target.value);
+  updateSlider();
+});
+
+// ── CHART ──
+function buildChart(btcPrice, mstrPrice) {
+  const ctx = document.getElementById('mstrChart').getContext('2d');
+
+  const btcRange = [];
+  for (let b = 40000; b <= 500000; b += 10000) btcRange.push(b);
+
+  const d1 = btcRange.map(b => calcFairValue(1, b));
+  const d2 = btcRange.map(b => calcFairValue(2, b));
+  const d3 = btcRange.map(b => calcFairValue(3, b));
+  const dMstr = mstrPrice ? btcRange.map(() => mstrPrice) : null;
+
+  const gradGreen = ctx.createLinearGradient(0, 0, 0, 280);
+  gradGreen.addColorStop(0, 'rgba(34,212,122,0.08)');
+  gradGreen.addColorStop(1, 'transparent');
+
+  const datasets = [
+    {
+      label: '1× mNAV',
+      data: d1,
+      borderColor: 'rgba(34,212,122,0.9)',
+      backgroundColor: gradGreen,
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      tension: 0.3,
+    },
+    {
+      label: '2× mNAV',
+      data: d2,
+      borderColor: 'rgba(245,197,66,0.9)',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      tension: 0.3,
+    },
+    {
+      label: '3× mNAV',
+      data: d3,
+      borderColor: 'rgba(255,77,109,0.9)',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      tension: 0.3,
+    },
+  ];
+
+  if (dMstr) {
+    datasets.push({
+      label: 'MSTR Price',
+      data: dMstr,
+      borderColor: 'rgba(255,255,255,0.45)',
+      borderDash: [5, 4],
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+    });
+  }
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: btcRange,
+      datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(12,12,22,0.95)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: 'rgba(255,255,255,0.5)',
+          bodyColor: '#e8e8f0',
+          titleFont: { family: "'IBM Plex Mono'" , size: 10 },
+          bodyFont: { family: "'IBM Plex Mono'", size: 11 },
+          padding: 10,
+          callbacks: {
+            title: items => '$' + Number(items[0].label).toLocaleString() + ' BTC',
+            label: item => item.dataset.label + ': $' + item.raw.toLocaleString('en-US', {maximumFractionDigits:2}),
+          }
+        },
+        annotation: undefined,
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+          ticks: {
+            color: 'rgba(232,232,240,0.3)',
+            font: { family: "'IBM Plex Mono'", size: 9 },
+            maxTicksLimit: 8,
+            callback: v => '$' + (btcRange[v] >= 1000 ? (btcRange[v]/1000) + 'K' : btcRange[v]),
+          },
+          border: { color: 'transparent' },
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+          ticks: {
+            color: 'rgba(232,232,240,0.3)',
+            font: { family: "'IBM Plex Mono'", size: 9 },
+            callback: v => v >= 1000 ? '$' + (v/1000).toFixed(0) + 'K' : '$' + v,
+          },
+          border: { color: 'transparent' },
+        }
+      }
+    }
+  });
+}
+
+function updateChart(btcPrice, mstrPrice) {
+  if (!chartInstance) { buildChart(btcPrice, mstrPrice); return; }
+
+  const btcRange = chartInstance.data.labels;
+  chartInstance.data.datasets[0].data = btcRange.map(b => calcFairValue(1, b));
+  chartInstance.data.datasets[1].data = btcRange.map(b => calcFairValue(2, b));
+  chartInstance.data.datasets[2].data = btcRange.map(b => calcFairValue(3, b));
+
+  if (mstrPrice && chartInstance.data.datasets[3]) {
+    chartInstance.data.datasets[3].data = btcRange.map(() => mstrPrice);
+  } else if (mstrPrice) {
+    chartInstance.data.datasets.push({
+      label: 'MSTR Price',
+      data: btcRange.map(() => mstrPrice),
+      borderColor: 'rgba(255,255,255,0.45)',
+      borderDash: [5, 4],
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+    });
+  }
+
+  chartInstance.update('none');
+}
+
+// ── INIT ──
+async function init() {
+  // Build chart with defaults first
+  buildChart(liveBtcPrice, null);
+  updateSlider();
+
+  // Set slider default to approximate live BTC
+  document.getElementById('btcSlider').value = 80000;
+  sliderBtcPrice = 80000;
+
+  // Fetch live data
+  const [btc, mstr] = await Promise.all([fetchBtcPrice(), fetchMstrPrice()]);
+  liveBtcPrice = btc;
+  if (mstr) liveMstrPrice = mstr;
+
+  // Sync slider to live price
+  const sliderBTC = Math.min(500000, Math.max(40000, Math.round(liveBtcPrice / 5000) * 5000));
+  document.getElementById('btcSlider').value = sliderBTC;
+  sliderBtcPrice = sliderBTC;
+
+  updateAll();
+
+  // Refresh every 60 seconds
+  setInterval(async () => {
+    const btc = await fetchBtcPrice();
+    liveBtcPrice = btc;
+    if (liveMstrPrice !== null) {
+      const mstr = await fetchMstrPrice();
+      if (mstr) liveMstrPrice = mstr;
+    }
+    updateAll();
+  }, 60000);
+}
+
+init();
+</script>
+</body>
+</html>
