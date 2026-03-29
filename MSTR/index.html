@@ -1040,24 +1040,22 @@ async function fetchBtcPrice() {
 
 // ── FETCH MSTR PRICE ──
 async function fetchMstrPrice() {
-  // Try Yahoo Finance (unofficial API - may have CORS restrictions in some environments)
-  const urls = [
-    'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=1d',
-    'https://query2.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=1d',
-  ];
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, {signal: AbortSignal.timeout(6000)});
-      const d = await r.json();
-      const price = d?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (price) {
-        liveMstrPrice = price;
-        document.getElementById('mstrPriceNote').textContent = 'via Yahoo Finance';
-        document.getElementById('mstrSourceNote').textContent = '';
-        return price;
-      }
-    } catch(e) { /* try next */ }
-  }
+  try {
+    const FINNHUB_KEY = 'd73d2chr01qjjol2ju30d73d2chr01qjjol2ju3g';
+    const r = await fetch(
+      `https://finnhub.io/api/v1/quote?symbol=MSTR&token=${FINNHUB_KEY}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const d = await r.json();
+    const price = d?.c; // current price
+    if (price && price > 0) {
+      liveMstrPrice = price;
+      document.getElementById('mstrPriceNote').textContent = 'via Finnhub · live';
+      document.getElementById('mstrSourceNote').textContent = '';
+      document.getElementById('manualInputWrap').style.display = 'none';
+      return price;
+    }
+  } catch(e) { console.warn('Finnhub error:', e); }
   // Fallback: show manual input
   showManualInput();
   return null;
