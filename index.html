@@ -571,6 +571,176 @@
 
           <button class="calc-btn" onclick="calcFIRE()">🔥 Calculate FIRE Number</button>
         </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- START YOUR BITCOIN SIP — CTA CARD         -->
+        <!-- ══════════════════════════════════════════ -->
+        <style>
+          @keyframes sip-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(247,147,26,0.35), 0 4px 32px rgba(247,147,26,0.12); border-color: rgba(247,147,26,0.45); }
+            50%       { box-shadow: 0 0 0 5px rgba(247,147,26,0.12), 0 4px 48px rgba(247,147,26,0.30); border-color: rgba(247,147,26,1); }
+          }
+          @keyframes badge-shine {
+            0%   { background-position: -200% center; }
+            100% { background-position: 200% center; }
+          }
+          .sip-cta-card {
+            margin-top: 16px;
+            padding: 22px 20px 20px;
+            background: linear-gradient(145deg, #1a1200 0%, #0f0d0a 60%, #0a0a0a 100%);
+            border: 1.5px solid rgba(247,147,26,0.45);
+            border-radius: 14px;
+            animation: sip-glow 2.8s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+          }
+          .sip-cta-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f7931a, #ffb347, #f7931a, transparent);
+            background-size: 200% auto;
+            animation: badge-shine 2.5s linear infinite;
+          }
+          .sip-cta-headline {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 0.03em;
+            color: var(--orange);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .sip-cta-sub {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            color: var(--text3);
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+          }
+          .sip-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text);
+            margin-bottom: 9px;
+            border: 1.5px solid transparent;
+            transition: transform 0.18s, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+            cursor: pointer;
+          }
+          .sip-link:last-child { margin-bottom: 0; }
+          .sip-link:hover { transform: translateX(4px); }
+          .sip-link-okx {
+            background: linear-gradient(135deg, rgba(247,147,26,0.14) 0%, rgba(247,147,26,0.05) 100%);
+            border-color: rgba(247,147,26,0.40);
+          }
+          .sip-link-okx:hover {
+            background: linear-gradient(135deg, rgba(247,147,26,0.28) 0%, rgba(247,147,26,0.12) 100%);
+            border-color: rgba(247,147,26,0.85);
+            box-shadow: 0 0 18px rgba(247,147,26,0.22);
+          }
+          .sip-link-sarwa {
+            background: linear-gradient(135deg, rgba(59,130,246,0.13) 0%, rgba(59,130,246,0.05) 100%);
+            border-color: rgba(59,130,246,0.35);
+          }
+          .sip-link-sarwa:hover {
+            background: linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(59,130,246,0.12) 100%);
+            border-color: rgba(59,130,246,0.80);
+            box-shadow: 0 0 18px rgba(59,130,246,0.20);
+          }
+          .sip-link-yt {
+            background: linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(239,68,68,0.05) 100%);
+            border-color: rgba(239,68,68,0.35);
+          }
+          .sip-link-yt:hover {
+            background: linear-gradient(135deg, rgba(239,68,68,0.25) 0%, rgba(239,68,68,0.12) 100%);
+            border-color: rgba(239,68,68,0.80);
+            box-shadow: 0 0 18px rgba(239,68,68,0.20);
+          }
+          .sip-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px;
+            flex-shrink: 0;
+          }
+          .sip-icon-okx   { background: rgba(247,147,26,0.15); }
+          .sip-icon-sarwa { background: rgba(59,130,246,0.15); }
+          .sip-icon-yt    { background: rgba(239,68,68,0.15); }
+          .sip-link-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 13.5px;
+            line-height: 1.2;
+          }
+          .sip-link-desc {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text2);
+            margin-top: 2px;
+            line-height: 1.4;
+          }
+          .sip-arrow {
+            margin-left: auto;
+            font-size: 18px;
+            flex-shrink: 0;
+            opacity: 0.7;
+            transition: opacity 0.18s, transform 0.18s;
+          }
+          .sip-link:hover .sip-arrow { opacity: 1; transform: translateX(3px); }
+          /* Responsive visibility */
+          .sip-desktop-only { display: block; }
+          .sip-mobile-only  { display: none;  }
+          @media (max-width: 900px) {
+            .sip-desktop-only { display: none !important; }
+            .sip-mobile-only  { display: block !important; margin-bottom: 20px; }
+          }
+        </style>
+
+        <div class="sip-cta-card sip-desktop-only">
+          <div class="sip-cta-headline">
+            <span>₿</span> Start Your Bitcoin SIP Today
+          </div>
+          <div class="sip-cta-sub">CHOOSE YOUR PLATFORM ↓ UAE REGULATED &amp; TRUSTED</div>
+
+          <!-- OKX -->
+          <a href="https://okx.com/join/73927914" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-okx">
+            <div class="sip-icon sip-icon-okx">🟠</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#f7931a;">Do Bitcoin SIP on OKX</div>
+              <div class="sip-link-desc">UAE Regulated Crypto Exchange · Buy BTC directly</div>
+            </div>
+            <span class="sip-arrow" style="color:#f7931a;">&#8594;</span>
+          </a>
+
+          <!-- Sarwa -->
+          <a href="https://www.sarwa.co/invite/NELL065A" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-sarwa">
+            <div class="sip-icon sip-icon-sarwa">📈</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#3b82f6;">Do Bitcoin SIP on Sarwa</div>
+              <div class="sip-link-desc">UAE Regulated Stock Broker · Buy Bitcoin ETF (IBIT)</div>
+            </div>
+            <span class="sip-arrow" style="color:#3b82f6;">&#8594;</span>
+          </a>
+
+          <!-- YouTube -->
+          <a href="https://www.youtube.com/watch?v=RkvSz5qfVsQ" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-yt">
+            <div class="sip-icon sip-icon-yt">▶️</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#ef4444;">Step-by-Step Video Guide</div>
+              <div class="sip-link-desc">How to buy Bitcoin using OKX · Watch on YouTube</div>
+            </div>
+            <span class="sip-arrow" style="color:#ef4444;">&#8594;</span>
+          </a>
+        </div>
+        <!-- ══════════════════════════════════════════ -->
+
       </div>
 
       <!-- RESULTS -->
@@ -612,100 +782,41 @@
           <div class="info-box" id="fireInfoBox" style="display:none"></div>
         </div>
 
+        <!-- Mobile-only CTA card (shown between Results and Chart on small screens) -->
+        <div class="sip-cta-card sip-mobile-only">
+          <div class="sip-cta-headline">
+            <span>₿</span> Start Your Bitcoin SIP Today
+          </div>
+          <div class="sip-cta-sub">CHOOSE YOUR PLATFORM ↓ UAE REGULATED &amp; TRUSTED</div>
+          <a href="https://okx.com/join/73927914" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-okx">
+            <div class="sip-icon sip-icon-okx">🟠</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#f7931a;">Do Bitcoin SIP on OKX</div>
+              <div class="sip-link-desc">UAE Regulated Crypto Exchange · Buy BTC directly</div>
+            </div>
+            <span class="sip-arrow" style="color:#f7931a;">&#8594;</span>
+          </a>
+          <a href="https://www.sarwa.co/invite/NELL065A" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-sarwa">
+            <div class="sip-icon sip-icon-sarwa">📈</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#3b82f6;">Do Bitcoin SIP on Sarwa</div>
+              <div class="sip-link-desc">UAE Regulated Stock Broker · Buy Bitcoin ETF (IBIT)</div>
+            </div>
+            <span class="sip-arrow" style="color:#3b82f6;">&#8594;</span>
+          </a>
+          <a href="https://www.youtube.com/watch?v=RkvSz5qfVsQ" target="_blank" rel="noopener noreferrer" class="sip-link sip-link-yt">
+            <div class="sip-icon sip-icon-yt">▶️</div>
+            <div style="flex:1; min-width:0;">
+              <div class="sip-link-title" style="color:#ef4444;">Step-by-Step Video Guide</div>
+              <div class="sip-link-desc">How to buy Bitcoin using OKX · Watch on YouTube</div>
+            </div>
+            <span class="sip-arrow" style="color:#ef4444;">&#8594;</span>
+          </a>
+        </div>
+
         <div class="card">
           <div class="card-title">📊 Corpus Growth Projection</div>
           <div class="chart-wrap"><canvas id="fireChart"></canvas></div>
-
-          <!-- ── Start Your Bitcoin SIP ── -->
-          <div style="
-            margin-top: 28px;
-            padding: 20px 0 4px;
-            border-top: 1px solid var(--border);
-          ">
-            <p style="
-              font-family: var(--font-mono);
-              font-size: 11px;
-              letter-spacing: 0.12em;
-              text-transform: uppercase;
-              color: var(--text3);
-              margin-bottom: 14px;
-            ">🚀 Ready to start your Bitcoin SIP? Pick your platform:</p>
-
-            <div style="display:flex; flex-direction:column; gap:10px;">
-
-              <!-- OKX -->
-              <a href="https://okx.com/join/73927914" target="_blank" rel="noopener noreferrer" style="
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                padding: 14px 18px;
-                background: linear-gradient(135deg, rgba(247,147,26,0.10) 0%, rgba(247,147,26,0.04) 100%);
-                border: 1px solid rgba(247,147,26,0.30);
-                border-radius: 10px;
-                text-decoration: none;
-                color: var(--text);
-                transition: border-color 0.2s, background 0.2s;
-              "
-              onmouseover="this.style.borderColor='rgba(247,147,26,0.70)';this.style.background='linear-gradient(135deg,rgba(247,147,26,0.18) 0%,rgba(247,147,26,0.08) 100%)'"
-              onmouseout="this.style.borderColor='rgba(247,147,26,0.30)';this.style.background='linear-gradient(135deg,rgba(247,147,26,0.10) 0%,rgba(247,147,26,0.04) 100%)'">
-                <span style="font-size:24px; flex-shrink:0;">🟠</span>
-                <div style="flex:1; min-width:0;">
-                  <div style="font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--orange);">Do Bitcoin SIP on OKX</div>
-                  <div style="font-family:var(--font-mono); font-size:11px; color:var(--text2); margin-top:2px;">UAE Regulated Crypto Exchange · Buy BTC directly</div>
-                </div>
-                <span style="font-size:16px; color:var(--orange); flex-shrink:0;">&#8594;</span>
-              </a>
-
-              <!-- Sarwa -->
-              <a href="https://www.sarwa.co/invite/NELL065A" target="_blank" rel="noopener noreferrer" style="
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                padding: 14px 18px;
-                background: linear-gradient(135deg, rgba(59,130,246,0.10) 0%, rgba(59,130,246,0.04) 100%);
-                border: 1px solid rgba(59,130,246,0.28);
-                border-radius: 10px;
-                text-decoration: none;
-                color: var(--text);
-                transition: border-color 0.2s, background 0.2s;
-              "
-              onmouseover="this.style.borderColor='rgba(59,130,246,0.65)';this.style.background='linear-gradient(135deg,rgba(59,130,246,0.18) 0%,rgba(59,130,246,0.08) 100%)'"
-              onmouseout="this.style.borderColor='rgba(59,130,246,0.28)';this.style.background='linear-gradient(135deg,rgba(59,130,246,0.10) 0%,rgba(59,130,246,0.04) 100%)'">
-                <span style="font-size:24px; flex-shrink:0;">📈</span>
-                <div style="flex:1; min-width:0;">
-                  <div style="font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--blue);">Do Bitcoin SIP on Sarwa</div>
-                  <div style="font-family:var(--font-mono); font-size:11px; color:var(--text2); margin-top:2px;">UAE Regulated Stock Broker · Buy Bitcoin ETF (IBIT)</div>
-                </div>
-                <span style="font-size:16px; color:var(--blue); flex-shrink:0;">&#8594;</span>
-              </a>
-
-              <!-- YouTube Video Guide -->
-              <a href="https://www.youtube.com/watch?v=RkvSz5qfVsQ" target="_blank" rel="noopener noreferrer" style="
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                padding: 14px 18px;
-                background: linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.04) 100%);
-                border: 1px solid rgba(239,68,68,0.28);
-                border-radius: 10px;
-                text-decoration: none;
-                color: var(--text);
-                transition: border-color 0.2s, background 0.2s;
-              "
-              onmouseover="this.style.borderColor='rgba(239,68,68,0.65)';this.style.background='linear-gradient(135deg,rgba(239,68,68,0.18) 0%,rgba(239,68,68,0.08) 100%)'"
-              onmouseout="this.style.borderColor='rgba(239,68,68,0.28)';this.style.background='linear-gradient(135deg,rgba(239,68,68,0.10) 0%,rgba(239,68,68,0.04) 100%)'">
-                <span style="font-size:24px; flex-shrink:0;">&#9654;&#65039;</span>
-                <div style="flex:1; min-width:0;">
-                  <div style="font-family:var(--font-display); font-weight:700; font-size:14px; color:#ef4444;">Step-by-Step Video Guide</div>
-                  <div style="font-family:var(--font-mono); font-size:11px; color:var(--text2); margin-top:2px;">How to buy Bitcoin using OKX · Watch on YouTube</div>
-                </div>
-                <span style="font-size:16px; color:#ef4444; flex-shrink:0;">&#8594;</span>
-              </a>
-
-            </div>
-          </div>
-          <!-- ── End CTA Links ── -->
-
         </div>
       </div>
     </div>
